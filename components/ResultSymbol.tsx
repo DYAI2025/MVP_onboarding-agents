@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { SmartImage } from './SmartImage';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface Props {
   imageUrl: string;
@@ -25,6 +26,7 @@ const ZODIAC_CONFIG: Record<string, { symbol: string, color: string, element: st
 };
 
 export const ResultSymbol: React.FC<Props> = ({ imageUrl, synthesis, sunSign }) => {
+  const { t } = useLanguage();
   const [hasError, setHasError] = useState(false);
 
   // Fallback Generator Logic
@@ -107,19 +109,19 @@ export const ResultSymbol: React.FC<Props> = ({ imageUrl, synthesis, sunSign }) 
         
         <div className="space-y-4 md:space-y-6 max-w-lg mb-8 md:mb-10 relative z-10 mx-auto px-2">
           <div className={`inline-block px-4 py-1.5 rounded-full border ${hasError ? 'border-red-200 bg-red-50 text-red-600' : 'border-astro-gold/30 bg-astro-gold/5 text-astro-gold'} text-[9px] md:text-[10px] uppercase tracking-[0.3em] md:tracking-[0.4em] font-black backdrop-blur-sm`}>
-            {hasError ? '⚠ Visual_Link_Unstable' : 'Visual_Confirmation'}
+            {hasError ? t.result.visual_link_unstable : t.result.visual_confirmation}
           </div>
-          <h3 className="font-serif text-3xl md:text-5xl lg:text-6xl text-astro-text leading-tight tracking-tight drop-shadow-sm break-words">Dein Schicksal im Kosmos</h3>
+          <h3 className="font-serif text-3xl md:text-5xl lg:text-6xl text-astro-text leading-tight tracking-tight drop-shadow-sm break-words">{t.result.heading}</h3>
           <p className="font-sans text-xs md:text-sm lg:text-base text-astro-subtext leading-relaxed font-light px-2">
             {hasError 
-              ? `Verbindungsfehler zur Bild-Matrix. Ein resonantes geometrisches Ersatz-Siegel wurde basierend auf deiner Sonnen-Signatur (${sunSign || 'Unknown'}) generiert.`
-              : "Deine Essenz wurde in ein kosmisches Siegel gewebt. Tritt in unsere Astrologie-Sphäre ein und entdecke die verborgenen Pfade deines Seins."}
+              ? t.result.error_desc
+              : t.result.success_desc}
           </p>
         </div>
         
         <div className="pt-6 md:pt-8 border-t border-astro-border/50 w-full flex justify-center relative z-10">
           <button className="group inline-flex items-center gap-3 md:gap-4 px-8 md:px-12 py-4 md:py-5 bg-[#0D0D0F] text-white font-serif italic text-lg md:text-2xl rounded-2xl hover:bg-black transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1 active:scale-95 overflow-hidden relative w-full sm:w-auto justify-center">
-            <span className="relative z-10">Zu den Sternen aufbrechen</span>
+            <span className="relative z-10">{t.result.btn_action}</span>
             <svg className="w-5 h-5 md:w-6 md:h-6 transition-transform group-hover:translate-x-2 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
             </svg>

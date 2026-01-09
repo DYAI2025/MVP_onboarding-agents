@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface Props {
   currentView: 'dashboard' | 'quizzes' | 'character_dashboard' | 'agent_selection' | 'matrix';
@@ -9,12 +10,14 @@ interface Props {
 }
 
 export const Sidebar: React.FC<Props> = ({ currentView, onNavigate, isDarkMode, onToggleTheme }) => {
+  const { language, toggleLanguage, t } = useLanguage();
+
   const menuItems = [
-    { id: 'dashboard', icon: '◉', label: 'Dashboard' },
-    { id: 'profile', icon: '👤', label: 'Identity' },
-    { id: 'quizzes', icon: '☾', label: 'Archive' },
-    { id: 'agents', icon: '✦', label: 'Entities' },
-    { id: 'premium', icon: '⚛', label: 'Ascension' },
+    { id: 'dashboard', icon: '◉', label: t.sidebar.dashboard },
+    { id: 'profile', icon: '👤', label: t.sidebar.identity },
+    { id: 'quizzes', icon: '☾', label: t.sidebar.archive },
+    { id: 'agents', icon: '✦', label: t.sidebar.entities },
+    { id: 'premium', icon: '⚛', label: t.sidebar.ascension },
   ];
 
   const handleNavigation = (id: string) => {
@@ -67,15 +70,28 @@ export const Sidebar: React.FC<Props> = ({ currentView, onNavigate, isDarkMode, 
           className={`flex items-center gap-5 p-3.5 cursor-pointer transition-colors group rounded-2xl ${currentView === 'matrix' ? 'bg-astro-bg text-astro-gold' : 'text-astro-subtext hover:text-astro-text'}`}
         >
           <span className="text-xl group-hover:rotate-90 transition-transform duration-700">⚙</span>
-          <span className="hidden md:inline font-sans text-[10px] tracking-[0.2em] uppercase font-bold">Matrix</span>
+          <span className="hidden md:inline font-sans text-[10px] tracking-[0.2em] uppercase font-bold">{t.sidebar.matrix}</span>
         </div>
+        
+        {/* Language Toggle */}
+        <div 
+          onClick={toggleLanguage}
+          className="flex items-center gap-5 text-astro-subtext p-3.5 cursor-pointer hover:text-astro-gold transition-all duration-500 group bg-astro-bg/30 rounded-2xl"
+        >
+          <span className="text-xl font-serif">{language === 'en' ? 'EN' : 'DE'}</span>
+          <span className="hidden md:inline font-sans text-[10px] tracking-[0.2em] uppercase font-bold">
+            {language === 'en' ? 'English' : 'Deutsch'}
+          </span>
+        </div>
+
+        {/* Theme Toggle */}
         <div 
           onClick={onToggleTheme}
           className="flex items-center gap-5 text-astro-subtext p-3.5 cursor-pointer hover:text-astro-gold transition-all duration-500 group bg-astro-bg/30 rounded-2xl"
         >
           <span className="text-xl">{isDarkMode ? '☀' : '☾'}</span>
           <span className="hidden md:inline font-sans text-[10px] tracking-[0.2em] uppercase font-bold">
-            {isDarkMode ? 'Lumen' : 'Nox'}
+            {isDarkMode ? t.sidebar.theme_light : t.sidebar.theme_dark}
           </span>
         </div>
       </div>

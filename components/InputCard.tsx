@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { BirthData } from '../types';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface Props {
   onSubmit: (data: BirthData) => void;
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export const InputCard: React.FC<Props> = ({ onSubmit, isLoading }) => {
+  const { t } = useLanguage();
   const [formData, setFormData] = useState<BirthData>({
     date: '',
     time: '',
@@ -29,7 +31,7 @@ export const InputCard: React.FC<Props> = ({ onSubmit, isLoading }) => {
       <div className="absolute -right-10 -top-10 w-32 h-32 bg-astro-gold/5 rounded-full blur-3xl group-hover:bg-astro-gold/10 transition-colors duration-700"></div>
 
       <div className="mb-10 border-b border-astro-border/50 pb-8">
-        <h3 className="font-serif text-3xl text-astro-text mb-4">Formale Astrologische Daten</h3>
+        <h3 className="font-serif text-3xl text-astro-text mb-4">{t.input.title}</h3>
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-3">
             <div className="h-[1px] w-8 bg-astro-gold"></div>
@@ -38,14 +40,14 @@ export const InputCard: React.FC<Props> = ({ onSubmit, isLoading }) => {
             </p>
           </div>
           <p className="font-mono text-lg text-astro-gold tracking-[0.2em] uppercase font-black drop-shadow-sm">
-            FusionEngine <span className="text-astro-text opacity-80">Protocol v1.2</span>
+            FusionEngine <span className="text-astro-text opacity-80">{t.input.subtitle}</span>
           </p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8 font-sans">
         <div className="space-y-3">
-          <label htmlFor="date" className="block text-[10px] font-bold uppercase tracking-[0.15em] text-astro-subtext">Geburtsdatum</label>
+          <label htmlFor="date" className="block text-[10px] font-bold uppercase tracking-[0.15em] text-astro-subtext">{t.input.date}</label>
           <input
             type="date"
             id="date"
@@ -57,7 +59,7 @@ export const InputCard: React.FC<Props> = ({ onSubmit, isLoading }) => {
         </div>
 
         <div className="space-y-3">
-          <label htmlFor="time" className="block text-[10px] font-bold uppercase tracking-[0.15em] text-astro-subtext">Geburtszeit (24h)</label>
+          <label htmlFor="time" className="block text-[10px] font-bold uppercase tracking-[0.15em] text-astro-subtext">{t.input.time}</label>
           <input
             type="time"
             id="time"
@@ -69,12 +71,12 @@ export const InputCard: React.FC<Props> = ({ onSubmit, isLoading }) => {
         </div>
 
         <div className="space-y-3">
-          <label htmlFor="location" className="block text-[10px] font-bold uppercase tracking-[0.15em] text-astro-subtext">Geburtsort</label>
+          <label htmlFor="location" className="block text-[10px] font-bold uppercase tracking-[0.15em] text-astro-subtext">{t.input.location}</label>
           <input
             type="text"
             id="location"
             required
-            placeholder="Stadt, Land"
+            placeholder={t.input.placeholder_loc}
             className="w-full bg-white dark:bg-zinc-900/50 border border-astro-border rounded-xl p-4 text-astro-text focus:outline-none focus:border-astro-gold focus:ring-1 focus:ring-astro-gold/20 transition-all shadow-inner placeholder:text-gray-300"
             onChange={handleChange}
             value={formData.location}
@@ -92,10 +94,10 @@ export const InputCard: React.FC<Props> = ({ onSubmit, isLoading }) => {
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
               </svg>
-              <span>Initialisierung...</span>
+              <span>{t.input.button_loading}</span>
             </>
           ) : (
-            <span>Validierung starten</span>
+            <span>{t.input.button_idle}</span>
           )}
         </button>
       </form>

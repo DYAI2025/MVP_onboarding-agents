@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FusionResult, CalculationState, Transit } from '../types';
 import { SymbolConfig } from '../services/geminiService';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface Props {
   result: FusionResult;
@@ -42,6 +43,7 @@ const TRANSIT_THEMES: Record<string, string> = {
 };
 
 export const AnalysisView: React.FC<Props> = ({ result, state, onGenerateImage, onNavigateToQuizzes, transits }) => {
+  const { t } = useLanguage();
   const [config, setConfig] = useState<SymbolConfig>({
     influence: 'balanced',
     transparentBackground: true
@@ -125,7 +127,7 @@ export const AnalysisView: React.FC<Props> = ({ result, state, onGenerateImage, 
     } else {
       try {
         await navigator.clipboard.writeText(shareText);
-        setShareFeedback('In die Zwischenablage kopiert!');
+        setShareFeedback(t.analysis.copied);
         setTimeout(() => setShareFeedback(null), 3000);
       } catch (err) {
         console.error('Failed to copy:', err);
@@ -156,11 +158,11 @@ export const AnalysisView: React.FC<Props> = ({ result, state, onGenerateImage, 
     <div className="space-y-12 md:space-y-16 animate-fade-in w-full">
       <div className="text-center space-y-4 px-4 mb-16">
         <div className="inline-block px-3 py-1 border border-green-200 bg-green-50 text-green-700 text-[10px] tracking-widest uppercase rounded-full dark:bg-green-900/30 dark:text-green-400 dark:border-green-800">
-          ✅ Systeme Synchronisiert
+          ✅ {t.analysis.synced}
         </div>
-        <h2 className="font-serif text-3xl md:text-5xl text-astro-text tracking-tight">Analyse & Erkenntnis</h2>
+        <h2 className="font-serif text-3xl md:text-5xl text-astro-text tracking-tight">{t.analysis.heading}</h2>
         <p className="font-sans text-sm md:text-base text-astro-subtext max-w-2xl mx-auto leading-relaxed">
-          Mysterium und Klarheit vereint. Finde deine wahre Natur durch reflektierte Analysen und persönliche Erkenntnisse.
+          {t.analysis.subheading}
         </p>
       </div>
 
@@ -171,7 +173,7 @@ export const AnalysisView: React.FC<Props> = ({ result, state, onGenerateImage, 
             className="group flex items-center gap-2 px-4 py-2 md:px-5 md:py-2.5 bg-white/50 dark:bg-zinc-800/50 border border-astro-border rounded-full hover:border-astro-gold transition-all duration-300 shadow-sm backdrop-blur-sm"
           >
             <span className="text-xs md:text-sm group-hover:scale-110 transition-transform">📤</span>
-            <span className="font-sans text-[9px] md:text-[10px] uppercase tracking-widest font-bold text-astro-subtext group-hover:text-astro-gold hidden sm:inline">Exportieren</span>
+            <span className="font-sans text-[9px] md:text-[10px] uppercase tracking-widest font-bold text-astro-subtext group-hover:text-astro-gold hidden sm:inline">{t.analysis.export}</span>
           </button>
           {shareFeedback && (
             <div className="absolute top-12 left-0 mt-2 bg-astro-text text-white text-[9px] px-3 py-1 rounded-full whitespace-nowrap animate-fade-in">
@@ -181,7 +183,7 @@ export const AnalysisView: React.FC<Props> = ({ result, state, onGenerateImage, 
         </div>
 
         <div className="text-center mb-10 md:mb-16 relative z-10 mt-12 md:mt-0">
-          <span className="font-sans text-[10px] md:text-[11px] tracking-[0.4em] text-astro-gold uppercase mb-3 md:mb-4 block font-black">Synthese-Matrix</span>
+          <span className="font-sans text-[10px] md:text-[11px] tracking-[0.4em] text-astro-gold uppercase mb-3 md:mb-4 block font-black">{t.analysis.synthesis_matrix}</span>
           <h3 className="font-serif text-4xl md:text-6xl text-astro-text mb-6 md:mb-8 tracking-tighter leading-tight">{result.synthesisTitle}</h3>
           <p className="font-sans text-base md:text-xl text-astro-subtext max-w-3xl mx-auto leading-relaxed opacity-80 font-light px-2">
             "{result.synthesisDescription}"
@@ -190,12 +192,12 @@ export const AnalysisView: React.FC<Props> = ({ result, state, onGenerateImage, 
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 mb-10 md:mb-16">
           <div className="bg-p-violet/20 backdrop-blur-md border border-astro-border rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-12 transition-transform hover:scale-[1.01] duration-500">
-            <h5 className="font-serif text-xl md:text-3xl text-astro-text mb-4 md:mb-8 border-b border-astro-border/50 pb-4 text-center">Westliche Sphäre</h5>
+            <h5 className="font-serif text-xl md:text-3xl text-astro-text mb-4 md:mb-8 border-b border-astro-border/50 pb-4 text-center">{t.analysis.western_sphere}</h5>
             <div className="space-y-6 font-sans text-xs">
               {[
-                { label: 'Sonnenzeichen', val: result.western.sunSign },
-                { label: 'Aszendent', val: result.western.ascendant },
-                { label: 'Element', val: result.western.element }
+                { label: t.analysis.sun_sign, val: result.western.sunSign },
+                { label: t.analysis.ascendant, val: result.western.ascendant },
+                { label: t.analysis.element, val: result.western.element }
               ].map((item, i) => (
                 <div key={i} className="flex justify-between items-center">
                   <span className="text-astro-subtext uppercase tracking-widest font-bold">{item.label}</span>
@@ -206,14 +208,14 @@ export const AnalysisView: React.FC<Props> = ({ result, state, onGenerateImage, 
           </div>
 
           <div className="bg-p-sage/20 backdrop-blur-md border border-astro-border rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-12 transition-transform hover:scale-[1.01] duration-500">
-            <h5 className="font-serif text-xl md:text-3xl text-astro-text mb-4 md:mb-8 border-b border-astro-border/50 pb-4 text-center">Östlicher Pfad</h5>
+            <h5 className="font-serif text-xl md:text-3xl text-astro-text mb-4 md:mb-8 border-b border-astro-border/50 pb-4 text-center">{t.analysis.eastern_path}</h5>
             <div className="space-y-6 font-sans text-xs">
               {[
-                { label: 'Wächter-Tier', val: result.eastern.yearAnimal },
-                { label: 'Basis-Element', val: result.eastern.yearElement },
-                { label: 'Tages-Meister', val: result.eastern.dayElement },
-                ...(result.eastern.dayStem ? [{ label: 'Himmelsstamm', val: result.eastern.dayStem }] : []),
-                ...(result.eastern.dayPolarity ? [{ label: 'Polarität', val: result.eastern.dayPolarity }] : [])
+                { label: t.analysis.guardian_animal, val: result.eastern.yearAnimal },
+                { label: t.analysis.base_element, val: result.eastern.yearElement },
+                { label: t.analysis.day_master, val: result.eastern.dayElement },
+                ...(result.eastern.dayStem ? [{ label: t.analysis.heavenly_stem, val: result.eastern.dayStem }] : []),
+                ...(result.eastern.dayPolarity ? [{ label: t.analysis.polarity, val: result.eastern.dayPolarity }] : [])
               ].map((item, i) => (
                 <div key={i} className="flex justify-between items-center">
                   <span className="text-astro-subtext uppercase tracking-widest font-bold">{item.label}</span>
@@ -232,7 +234,7 @@ export const AnalysisView: React.FC<Props> = ({ result, state, onGenerateImage, 
             <div className="relative z-10">
               <div className="flex items-center justify-center gap-2 mb-10">
                  <div className="w-1.5 h-1.5 rounded-full bg-astro-gold animate-pulse"></div>
-                 <span className="text-[10px] uppercase tracking-[0.3em] font-bold text-gray-400">Aktuelle Kosmische Strömungen</span>
+                 <span className="text-[10px] uppercase tracking-[0.3em] font-bold text-gray-400">{t.weather.current_currents}</span>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12">
@@ -242,7 +244,7 @@ export const AnalysisView: React.FC<Props> = ({ result, state, onGenerateImage, 
                     ☉
                   </div>
                   <div>
-                    <div className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-1">Solare Saison</div>
+                    <div className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-1">{t.weather.solar_season}</div>
                     <div className="font-serif text-2xl md:text-3xl mb-2 text-white">{currentSun.sign}</div>
                     <div className="text-xs md:text-sm text-gray-300 font-light leading-relaxed">
                       {TRANSIT_THEMES[currentSun.sign]}
@@ -256,7 +258,7 @@ export const AnalysisView: React.FC<Props> = ({ result, state, onGenerateImage, 
                     ☽
                   </div>
                   <div>
-                    <div className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-1">Lunare Stimmung</div>
+                    <div className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-1">{t.weather.lunar_mood}</div>
                     <div className="font-serif text-2xl md:text-3xl mb-2 text-white">{currentMoon.sign}</div>
                     <div className="text-xs md:text-sm text-gray-300 font-light leading-relaxed">
                       {TRANSIT_THEMES[currentMoon.sign]}
@@ -271,7 +273,7 @@ export const AnalysisView: React.FC<Props> = ({ result, state, onGenerateImage, 
                    <div className="flex flex-wrap items-center justify-center gap-4">
                       <span className="text-[9px] uppercase tracking-widest text-red-400 font-bold flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
-                        Retrograde Phase:
+                        {t.weather.retrograde}:
                       </span>
                       {retrogrades.map(p => (
                         <span key={p.body} className="px-4 py-1.5 bg-red-500/10 border border-red-500/30 rounded-full text-[10px] uppercase tracking-wider text-red-200 font-medium">
@@ -336,7 +338,7 @@ export const AnalysisView: React.FC<Props> = ({ result, state, onGenerateImage, 
               <div className="inline-flex items-center gap-4 mb-8 md:mb-12">
                 <span className={`w-1.5 h-1.5 rounded-full bg-astro-gold transition-all duration-500 animate-pulse-soft ${isHovering ? 'scale-150 shadow-[0_0_12px_#D4AF37]' : ''}`}></span>
                 <span className="font-serif text-sm md:text-xl italic tracking-[0.2em] text-astro-gold font-medium transition-all duration-700 group-hover:tracking-[0.3em]">
-                  Solar-Signatur: {result.western.sunSign}
+                  {t.analysis.solar_signature}: {result.western.sunSign}
                 </span>
                 <span className={`w-1.5 h-1.5 rounded-full bg-astro-gold transition-all duration-500 animate-pulse-soft ${isHovering ? 'scale-150 shadow-[0_0_12px_#D4AF37]' : ''}`} style={{ animationDelay: '1.5s' }}></span>
               </div>
@@ -361,17 +363,17 @@ export const AnalysisView: React.FC<Props> = ({ result, state, onGenerateImage, 
         <div className="mt-10 md:mt-16 bg-astro-bg/30 rounded-[2rem] md:rounded-[2.5rem] p-8 md:p-12 border border-astro-border animate-fade-in-up">
            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
               <div className="text-center md:text-left w-full md:w-auto">
-                 <h4 className="font-serif text-2xl md:text-3xl text-astro-text mb-1">Generator-Konfiguration</h4>
-                 <p className="font-sans text-[10px] uppercase tracking-widest text-astro-subtext font-bold">Gewichtung der kosmischen Einflüsse</p>
+                 <h4 className="font-serif text-2xl md:text-3xl text-astro-text mb-1">{t.analysis.generator_config}</h4>
+                 <p className="font-sans text-[10px] uppercase tracking-widest text-astro-subtext font-bold">{t.analysis.config_subtitle}</p>
               </div>
               <div className="flex items-center gap-4 w-full md:w-auto justify-center md:justify-end">
                  <div className="flex items-center gap-2">
-                    <div className="text-[9px] uppercase tracking-widest text-astro-subtext font-bold">Hintergrund:</div>
+                    <div className="text-[9px] uppercase tracking-widest text-astro-subtext font-bold">{t.analysis.background}:</div>
                     <button 
                       onClick={() => setConfig(prev => ({ ...prev, transparentBackground: !prev.transparentBackground }))}
                       className={`px-4 py-1.5 rounded-full border text-[9px] uppercase tracking-widest font-black transition-all ${config.transparentBackground ? 'bg-astro-text text-white border-astro-text' : 'bg-white text-astro-subtext border-astro-border hover:border-astro-gold'}`}
                     >
-                      {config.transparentBackground ? 'Minimal' : 'Ambient'}
+                      {config.transparentBackground ? t.analysis.minimal : t.analysis.ambient}
                     </button>
                  </div>
               </div>
@@ -379,9 +381,9 @@ export const AnalysisView: React.FC<Props> = ({ result, state, onGenerateImage, 
 
            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
-                { id: 'western', label: 'Westlich', icon: '♈', desc: 'Fokus auf solare Geometrie & Tierkreis-Elemente.', accent: 'border-amber-400', glow: 'shadow-[0_0_20px_rgba(245,158,11,0.2)]' },
-                { id: 'balanced', label: 'Balance', icon: '☯', desc: 'Perfekte Symbiose beider astrologischen Welten.', accent: 'border-astro-gold', glow: 'shadow-ambient' },
-                { id: 'eastern', label: 'Östlich', icon: '🐉', desc: 'Fokus auf Ba Zi Wächter-Tier & 5-Elemente-Fluss.', accent: 'border-emerald-500', glow: 'shadow-[0_0_25px_rgba(16,185,129,0.3)]' },
+                { id: 'western', label: t.analysis.opt_western, icon: '♈', desc: t.analysis.opt_western_desc, accent: 'border-amber-400', glow: 'shadow-[0_0_20px_rgba(245,158,11,0.2)]' },
+                { id: 'balanced', label: t.analysis.opt_balanced, icon: '☯', desc: t.analysis.opt_balanced_desc, accent: 'border-astro-gold', glow: 'shadow-ambient' },
+                { id: 'eastern', label: t.analysis.opt_eastern, icon: '🐉', desc: t.analysis.opt_eastern_desc, accent: 'border-emerald-500', glow: 'shadow-[0_0_25px_rgba(16,185,129,0.3)]' },
               ].map((opt) => {
                 const isActive = config.influence === opt.id;
                 return (
@@ -411,8 +413,8 @@ export const AnalysisView: React.FC<Props> = ({ result, state, onGenerateImage, 
                 <div className="flex items-center gap-4">
                    <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-800 rounded-full flex items-center justify-center text-emerald-600 dark:text-emerald-400 text-2xl">🐉</div>
                    <div>
-                      <div className="font-serif text-xl text-emerald-900 dark:text-emerald-100">Östlicher Fokus Aktiviert</div>
-                      <p className="text-[10px] font-sans text-emerald-600/70 uppercase tracking-widest font-bold">Elementarer Fluss & Wächter-Resonanz</p>
+                      <div className="font-serif text-xl text-emerald-900 dark:text-emerald-100">{t.analysis.eastern_active}</div>
+                      <p className="text-[10px] font-sans text-emerald-600/70 uppercase tracking-widest font-bold">{t.analysis.eastern_active_sub}</p>
                    </div>
                 </div>
                 <div className="px-5 py-2.5 bg-emerald-600 text-white rounded-full text-[10px] uppercase tracking-widest font-black shadow-lg">
@@ -430,7 +432,7 @@ export const AnalysisView: React.FC<Props> = ({ result, state, onGenerateImage, 
              className="w-full md:w-auto px-10 py-5 md:px-16 md:py-6 bg-astro-text text-white font-serif italic text-xl md:text-2xl rounded-2xl shadow-elevated hover:bg-black transition-all duration-500 disabled:opacity-50 relative overflow-hidden group"
            >
              <span className="relative z-10">
-               {state === CalculationState.GENERATING_IMAGE ? 'Kosmische Webung...' : 'Erschaffe dein Symbol'}
+               {state === CalculationState.GENERATING_IMAGE ? t.analysis.btn_generating : t.analysis.btn_generate}
              </span>
              <div className="absolute inset-0 bg-gradient-to-r from-astro-gold/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
            </button>

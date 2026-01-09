@@ -1,6 +1,7 @@
 
 import React, { useMemo, useState, useRef } from 'react';
 import { Transit } from '../types';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface Props {
   transits: Transit[];
@@ -87,11 +88,13 @@ const BODY_STYLES: Record<string, any> = {
 
 const ZODIAC_ORDER = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
 
-export const CosmicWeather: React.FC<Props> = ({ transits, isLoading, title = "Kosmisches Wetter", displayDate }) => {
+export const CosmicWeather: React.FC<Props> = ({ transits, isLoading, title, displayDate }) => {
+  const { t, language } = useLanguage();
+  
   // Use the passed displayDate or fallback to now
   const dateToUse = displayDate || new Date();
   
-  const dateStr = dateToUse.toLocaleDateString('de-DE', { 
+  const dateStr = dateToUse.toLocaleDateString(language === 'de' ? 'de-DE' : 'en-US', { 
     weekday: 'long', 
     year: 'numeric', 
     month: 'long', 
@@ -262,7 +265,7 @@ export const CosmicWeather: React.FC<Props> = ({ transits, isLoading, title = "K
         <div>
           <div className="flex items-center gap-2 mb-1">
              <div className="w-1.5 h-1.5 rounded-full bg-astro-gold animate-pulse"></div>
-             <h3 className="font-serif text-3xl text-white">{title}</h3>
+             <h3 className="font-serif text-3xl text-white">{title || t.weather.title}</h3>
           </div>
           <p className="font-sans text-[10px] text-gray-400 uppercase tracking-[0.3em] font-medium">{dateStr}</p>
         </div>
@@ -472,7 +475,7 @@ export const CosmicWeather: React.FC<Props> = ({ transits, isLoading, title = "K
                             <span className="font-serif text-lg text-white">{hoveredSign}</span>
                         </div>
                         <span className="text-[9px] uppercase tracking-widest font-black text-gray-400">
-                             {ZODIAC_ELEMENTS[hoveredSign]} Sektor
+                             {ZODIAC_ELEMENTS[hoveredSign]} {t.analysis.element}
                         </span>
                     </>
                 )}
@@ -495,7 +498,7 @@ export const CosmicWeather: React.FC<Props> = ({ transits, isLoading, title = "K
                                  <span className="text-[9px] uppercase tracking-widest font-black text-gray-400">Position</span>
                                  <span className="font-serif text-xl text-astro-gold">{p.sign}</span>
                                  <span className="text-[9px] uppercase tracking-widest font-bold mt-1" style={{ color: elColor }}>
-                                    {elName} Element
+                                    {elName} {t.analysis.element}
                                  </span>
                              </div>
                         </>
@@ -517,7 +520,7 @@ export const CosmicWeather: React.FC<Props> = ({ transits, isLoading, title = "K
                 <div className="animate-fade-in flex flex-col h-full relative z-10">
                    <div className="flex justify-between items-start mb-6">
                       <div>
-                        <div className="text-astro-gold text-[10px] font-black tracking-[0.4em] uppercase mb-1">Planetare Analyse</div>
+                        <div className="text-astro-gold text-[10px] font-black tracking-[0.4em] uppercase mb-1">{t.weather.planetary_analysis}</div>
                         <h4 className="font-serif text-5xl text-white tracking-tight">{activePlanet.body}</h4>
                       </div>
                       {selectedPlanet && (
@@ -568,16 +571,16 @@ export const CosmicWeather: React.FC<Props> = ({ transits, isLoading, title = "K
               ) : hoveredSign ? (
                 <div className="animate-fade-in flex flex-col h-full relative z-10">
                    <div className="mb-10">
-                      <div className="text-astro-gold text-[10px] font-black tracking-[0.4em] uppercase mb-1">Fokus-Sektor</div>
+                      <div className="text-astro-gold text-[10px] font-black tracking-[0.4em] uppercase mb-1">{t.weather.focus_sector}</div>
                       <h4 className="font-serif text-6xl text-white tracking-tight">{hoveredSign}</h4>
                    </div>
                    <div className="space-y-6">
                       <div className="bg-black/40 p-6 rounded-2xl border border-astro-gold/40 flex justify-between items-center group shadow-lg">
-                         <span className="text-[12px] uppercase tracking-widest font-bold text-gray-300 group-hover:text-astro-gold transition-colors">Primäres Element</span>
+                         <span className="text-[12px] uppercase tracking-widest font-bold text-gray-300 group-hover:text-astro-gold transition-colors">{t.weather.primary_element}</span>
                          <span className="font-serif text-4xl text-astro-gold" style={{ color: ELEMENT_COLORS[ZODIAC_ELEMENTS[hoveredSign]] }}>{ZODIAC_ELEMENTS[hoveredSign]}</span>
                       </div>
                       <div className="p-8 border-l-4 border-astro-gold/50 bg-white/5 rounded-r-3xl shadow-inner" style={{ borderColor: ELEMENT_COLORS[ZODIAC_ELEMENTS[hoveredSign]] }}>
-                         <h5 className="text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-3 font-bold">Essenz</h5>
+                         <h5 className="text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-3 font-bold">{t.weather.essence}</h5>
                          <p className="font-serif italic text-2xl text-gray-200 leading-relaxed">
                             {hoveredSign === 'Aries' ? 'Der feurige Funke, der den kosmischen Reigen entfacht.' : 
                              hoveredSign === 'Pisces' ? 'Die transzendente Tiefe, in der sich alle Seelen spiegeln.' :
@@ -589,9 +592,9 @@ export const CosmicWeather: React.FC<Props> = ({ transits, isLoading, title = "K
               ) : (
                 <div className="flex-1 flex flex-col items-center justify-center text-center p-8 group cursor-pointer" onClick={() => setSelectedPlanet(planetCoords[0])}>
                    <div className="w-20 h-20 rounded-full border border-dashed border-white/20 flex items-center justify-center text-white/10 text-4xl mb-6 group-hover:scale-110 group-hover:border-astro-gold/40 transition-all duration-700 shadow-inner">✦</div>
-                   <h4 className="font-serif text-2xl text-white/60 mb-3 italic group-hover:text-white/90 transition-colors tracking-wide">Sphärenharmonie</h4>
+                   <h4 className="font-serif text-2xl text-white/60 mb-3 italic group-hover:text-white/90 transition-colors tracking-wide">{t.weather.sphere_harmony}</h4>
                    <p className="text-[10px] text-gray-500 uppercase tracking-[0.3em] leading-relaxed max-w-[250px] font-light">
-                     Bewege den Cursor über Orbits oder Zeichen, um energetische Aspekte und planetare Muster zu visualisieren.
+                     {t.weather.hover_hint}
                    </p>
                 </div>
               )}

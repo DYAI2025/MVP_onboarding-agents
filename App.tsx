@@ -13,11 +13,13 @@ import { BirthData, CalculationState, FusionResult, Transit } from './types';
 import { runFusionAnalysis } from './services/astroPhysics';
 import { generateSymbol, SymbolConfig } from './services/geminiService';
 import { fetchCurrentTransits, fetchTransitsForDate } from './services/transitService';
+import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
 
 type ViewType = 'dashboard' | 'quizzes' | 'character_dashboard' | 'agent_selection' | 'matrix';
 
-export default function App() {
+function AppContent() {
   const [currentView, setCurrentView] = useState<ViewType>('dashboard');
+  const { t } = useLanguage();
   
   // Initialize theme from localStorage
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -211,20 +213,20 @@ export default function App() {
                       transits={transits} 
                       isLoading={loadingTransits} 
                       displayDate={transitDate}
-                      title={astroState === CalculationState.IDLE ? "Kosmisches Wetter" : "Deine Celestia Matrix"}
+                      title={astroState === CalculationState.IDLE ? t.weather.title : t.weather.matrix_title}
                     />
                    
                    {/* Idle State Message */}
                    {astroState === CalculationState.IDLE && (
                       <div className="flex flex-col items-center justify-center text-center py-10 opacity-60">
-                        <p className="font-serif italic text-lg text-astro-subtext">Geburtsdaten für individuelle Sphären-Projektion erforderlich.</p>
+                        <p className="font-serif italic text-lg text-astro-subtext">{t.weather.idle_state}</p>
                       </div>
                    )}
                    
                    {/* Error State */}
                    {astroState === CalculationState.ERROR && (
                       <div className="h-full flex flex-col items-center justify-center text-center py-20 bg-red-50 dark:bg-red-900/10 rounded-[3rem] border border-red-200">
-                        <h3 className="font-serif text-3xl text-red-600">Verbindungsabbruch</h3>
+                        <h3 className="font-serif text-3xl text-red-600">{t.weather.connection_lost}</h3>
                       </div>
                    )}
                 </div>
@@ -256,5 +258,13 @@ export default function App() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <LanguageProvider>
+      <AppContent />
+    </LanguageProvider>
   );
 }
