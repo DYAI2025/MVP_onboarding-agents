@@ -1,7 +1,18 @@
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { FusionResult } from '../types';
 import { SmartImage } from './SmartImage';
+
+// Define custom element for TypeScript
+// Using 'any' avoids namespace collision or resolution issues with React types in global scope
+// which was causing JSX.IntrinsicElements to break across the entire project.
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      'elevenlabs-convai': any;
+    }
+  }
+}
 
 interface Props {
   result: FusionResult;
@@ -9,52 +20,132 @@ interface Props {
   onAgentSelect: (agentId: string) => void;
 }
 
+// REPLACE THESE WITH YOUR ACTUAL ELEVEN LABS AGENT IDs
+const AGENT_CONFIGS = {
+  levi: {
+    id: 'levi',
+    name: 'Levi Bazi',
+    role: 'Quantum_BaZi_Protocols',
+    // Placeholder ID - User needs to create an agent in Eleven Labs and paste ID here
+    elevenLabsId: 'replace-with-levi-agent-id' 
+  },
+  victoria: {
+    id: 'victoria',
+    name: 'Victoria Celestia',
+    role: 'Celestial_Relationship_Module',
+    // Placeholder ID - User needs to create an agent in Eleven Labs and paste ID here
+    elevenLabsId: 'replace-with-victoria-agent-id'
+  }
+};
+
 export const AgentSelectionView: React.FC<Props> = ({ result, symbolUrl, onAgentSelect }) => {
   
-  // Audio Ref for the Gong
+  const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
+  const [isChatActive, setIsChatActive] = useState(false);
   const gongRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    // Initialize Audio Object
-    // Using a reliable public domain gong sound
     gongRef.current = new Audio('https://cdn.freesound.org/previews/26/26777_189914-lq.mp3');
   }, []);
 
   const handleSelection = (agentId: string) => {
+    // 1. Play Gong
     if (gongRef.current) {
       const audio = gongRef.current;
       audio.currentTime = 0;
       audio.volume = 1.0;
       audio.play().catch(e => console.error("Audio play failed", e));
-
-      // Implement the "Slow Fade Out" logic manually
-      // We start fading after 2 seconds to let the impact hit, then fade over 3 seconds
       setTimeout(() => {
         const fadeInterval = setInterval(() => {
-            if (audio.volume > 0.05) {
-                audio.volume -= 0.05;
-            } else {
-                audio.volume = 0;
-                audio.pause();
-                clearInterval(fadeInterval);
-            }
-        }, 150); // Steps to reduce volume
+            if (audio.volume > 0.05) { audio.volume -= 0.05; } 
+            else { audio.volume = 0; audio.pause(); clearInterval(fadeInterval); }
+        }, 150);
       }, 2000);
     }
     
-    // Trigger navigation
-    onAgentSelect(agentId);
+    // 2. Open Chat Interface
+    setSelectedAgent(agentId);
+    setIsChatActive(true);
+  };
+
+  const handleProceedToDashboard = () => {
+    if (selectedAgent) {
+      onAgentSelect(selectedAgent);
+    }
   };
 
   return (
     <div className="min-h-screen bg-[#0F1014] text-gray-300 font-sans p-6 md:p-12 relative overflow-hidden animate-fade-in">
       
-      {/* Background Ambience - Darker for contrast */}
+      {/* Background Ambience */}
       <div className="absolute top-[-20%] left-[-10%] w-[800px] h-[800px] bg-blue-900/10 rounded-full blur-[120px] pointer-events-none mix-blend-screen"></div>
       <div className="absolute bottom-[-10%] right-[-5%] w-[600px] h-[600px] bg-amber-900/10 rounded-full blur-[100px] pointer-events-none"></div>
 
+      {/* --- CHAT MODAL OVERLAY --- */}
+      {isChatActive && selectedAgent && (
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-xl flex flex-col items-center justify-center p-4 animate-fade-in">
+           <div className="max-w-4xl w-full h-[85vh] bg-[#0F1014] border border-astro-gold/30 rounded-[3rem] shadow-[0_0_100px_rgba(212,175,55,0.1)] relative overflow-hidden flex flex-col md:flex-row">
+              
+              {/* Left Panel: Visual Context */}
+              <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-white/10 relative bg-gradient-to-b from-[#15151A] to-[#0F1014]">
+                 <div className="absolute top-8 left-8 text-[10px] uppercase tracking-[0.3em] text-astro-gold font-bold animate-pulse">Live Uplink Active</div>
+                 
+                 {/* Symbol Display */}
+                 <div className="w-64 h-64 rounded-full border border-astro-gold/20 p-2 relative mb-8 shadow-[0_0_50px_rgba(212,175,55,0.1)]">
+                    <div className="absolute inset-0 rounded-full border border-astro-gold/10 animate-[spin_30s_linear_infinite]"></div>
+                    <div className="w-full h-full rounded-full overflow-hidden bg-black relative z-10">
+                       <SmartImage src={symbolUrl} alt="Symbol" className="w-full h-full object-cover" />
+                    </div>
+                 </div>
+
+                 <h3 className="font-serif text-3xl text-white mb-2">{AGENT_CONFIGS[selectedAgent as keyof typeof AGENT_CONFIGS].name}</h3>
+                 <p className="text-xs text-gray-500 uppercase tracking-widest font-bold mb-8">
+                   {AGENT_CONFIGS[selectedAgent as keyof typeof AGENT_CONFIGS].role}
+                 </p>
+
+                 <div className="text-center space-y-4">
+                    <p className="text-sm text-gray-400 italic max-w-xs mx-auto">
+                      "Ich bin bereit. Sprich mit mir über deine Matrix oder das Symbol, das wir generiert haben."
+                    </p>
+                 </div>
+              </div>
+
+              {/* Right Panel: Eleven Labs Widget */}
+              <div className="w-full md:w-1/2 relative bg-[#0B0C10] flex flex-col">
+                 <div className="flex-1 flex items-center justify-center p-8">
+                    {/* ELEVEN LABS WIDGET CONTAINER */}
+                    <div className="w-full max-w-sm">
+                       {/* Note: In a real scenario, you'd dynamicall set agent-id based on selectedAgent */}
+                       <elevenlabs-convai 
+                          agent-id={AGENT_CONFIGS[selectedAgent as keyof typeof AGENT_CONFIGS].elevenLabsId}
+                          class="w-full"
+                       ></elevenlabs-convai>
+                       
+                       {/* Fallback message if no ID is configured */}
+                       {AGENT_CONFIGS[selectedAgent as keyof typeof AGENT_CONFIGS].elevenLabsId.includes('replace') && (
+                         <div className="mt-4 p-4 bg-red-900/20 border border-red-500/30 rounded-xl text-center">
+                           <p className="text-xs text-red-400">Dev Note: Please configure valid Agent IDs in AgentSelectionView.tsx</p>
+                         </div>
+                       )}
+                    </div>
+                 </div>
+
+                 {/* Bottom Action */}
+                 <div className="p-8 border-t border-white/5 bg-[#0F1014]">
+                    <button 
+                      onClick={handleProceedToDashboard}
+                      className="w-full py-4 bg-gradient-to-r from-astro-gold to-[#B89628] text-white font-serif italic text-xl rounded-2xl shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-3"
+                    >
+                      Zum Dashboard fortfahren <span className="not-italic">→</span>
+                    </button>
+                 </div>
+              </div>
+           </div>
+        </div>
+      )}
+
       {/* --- HEADER SECTION --- */}
-      <div className="max-w-7xl mx-auto mb-20 relative z-10">
+      <div className={`max-w-7xl mx-auto mb-20 relative z-10 transition-all duration-700 ${isChatActive ? 'blur-xl opacity-30 pointer-events-none' : ''}`}>
         
         {/* Navigation / Meta */}
         <div className="flex justify-between items-center mb-16">
@@ -112,7 +203,7 @@ export const AgentSelectionView: React.FC<Props> = ({ result, symbolUrl, onAgent
                     Während die westliche Astrologie deine psychologische Struktur und den solaren Willen definiert, offenbart das östliche Ba Zi die elementaren Rhythmen und das Fundament deines Schicksals. Zusammen weben sie die Matrix deiner wahren Potentiale.
                   </p>
                   <p className="text-astro-gold/80 font-medium text-xl font-serif italic pt-2">
-                    Wähle deinen persönlichen Astro-Consultant für tiefgehende Einblicke und einen astrologischen Deep-Dive.
+                    Sprich jetzt mit deinem Astro-Agenten über das Widget, um deine Reise zu beginnen.
                   </p>
                 </div>
                 
@@ -132,143 +223,84 @@ export const AgentSelectionView: React.FC<Props> = ({ result, symbolUrl, onAgent
       </div>
 
       {/* --- AGENT CARDS --- */}
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 relative z-10 pb-20 mt-28">
+      <div className={`max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 relative z-10 pb-20 mt-28 transition-all duration-700 ${isChatActive ? 'blur-xl opacity-30 pointer-events-none' : ''}`}>
          
-         {/* AGENT 1: LEVI BAZI - HEAVY BRONZE PLATE STYLE */}
+         {/* AGENT 1: LEVI BAZI */}
          <div 
             onClick={() => handleSelection('levi')}
             className="group relative cursor-pointer transform hover:-translate-y-2 transition-transform duration-500"
          >
-            {/* The Bronze Plate Container */}
             <div className="relative rounded-[2.5rem] p-10 overflow-hidden shadow-[0_25px_50px_-12px_rgba(0,0,0,0.7)] transition-all duration-500 group-hover:shadow-[0_35px_60px_-15px_rgba(212,175,55,0.15)]
                  bg-gradient-to-br from-[#785a3c] via-[#a88856] to-[#4a3420]
                  border-t border-l border-[#d4af37]/40 border-b-[6px] border-r-[6px] border-[#2a1b0e]/60"
             >
-                {/* Brushed Metal Texture Overlay */}
                 <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/brushed-alum-dark.png')] mix-blend-overlay pointer-events-none"></div>
-                <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-black/20 pointer-events-none mix-blend-overlay"></div>
-
                 <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity transform group-hover:rotate-12 duration-700 mix-blend-multiply">
                    <span className="text-9xl text-[#2a1b0e]">🐉</span>
                 </div>
-                
                 <div className="relative z-10">
                     <div className="flex items-center gap-2 mb-8">
-                       <span className="text-[9px] uppercase tracking-[0.3em] font-black text-[#3e2718] drop-shadow-[0_1px_0_rgba(255,255,255,0.2)]">Quantum_BaZi_Protocols</span>
+                       <span className="text-[9px] uppercase tracking-[0.3em] font-black text-[#3e2718]">Quantum_BaZi_Protocols</span>
                        <div className="w-2 h-2 rounded-full bg-[#3e2718] shadow-inner"></div>
                     </div>
-
-                    {/* Engraved Text Effect */}
-                    <h2 className="font-serif text-5xl mb-4 text-[#2a1b0e] font-bold drop-shadow-[0_1px_1px_rgba(255,255,255,0.2)]" style={{ textShadow: 'inset 1px 1px 2px rgba(0,0,0,0.5)' }}>
+                    <h2 className="font-serif text-5xl mb-4 text-[#2a1b0e] font-bold" style={{ textShadow: 'inset 1px 1px 2px rgba(0,0,0,0.5)' }}>
                         Levi Bazi
                     </h2>
-                    
                     <div className="flex gap-2 mb-8">
                        {['BAZI', 'ELEMENTS', 'CYCLES', 'FUSION'].map(tag => (
-                          <span key={tag} className="text-[9px] uppercase tracking-widest text-[#3e2718] border border-[#3e2718]/20 px-3 py-1.5 rounded-lg bg-[#3e2718]/5 font-bold drop-shadow-[0_1px_0_rgba(255,255,255,0.2)]">{tag}</span>
+                          <span key={tag} className="text-[9px] uppercase tracking-widest text-[#3e2718] border border-[#3e2718]/20 px-3 py-1.5 rounded-lg bg-[#3e2718]/5 font-bold">{tag}</span>
                        ))}
                     </div>
-
                     <div className="bg-[#2a1b0e]/10 border border-[#2a1b0e]/10 p-6 rounded-2xl mb-8 shadow-inner">
-                       <p className="font-sans text-sm text-[#1a0f05] leading-relaxed italic font-medium drop-shadow-[0_1px_0_rgba(255,255,255,0.1)]">
-                          "Eine tiefe, ruhige männliche Stimme mit einem scharfen, systematischen Ansatz für Berechnung und Synthese. Ich analysiere die strukturelle Integrität deiner Schicksalsmatrix."
+                       <p className="font-sans text-sm text-[#1a0f05] leading-relaxed italic font-medium">
+                          "Systematische Analyse deiner Schicksalsmatrix. Klicke hier für das Briefing."
                        </p>
                     </div>
-
-                    <div className="space-y-4 pt-4 border-t border-[#3e2718]/10">
-                       <ul className="space-y-3">
-                          <li className="flex items-center gap-3 text-sm text-[#2a1b0e] font-semibold">
-                             <span className="text-[#3e2718] opacity-60 group-hover:opacity-100 transition-opacity">✓</span> Ruhige männliche Präsenz
-                          </li>
-                          <li className="flex items-center gap-3 text-sm text-[#2a1b0e] font-semibold">
-                             <span className="text-[#3e2718] opacity-60 group-hover:opacity-100 transition-opacity">✓</span> Experte für Ba Zi & Fusion
-                          </li>
-                       </ul>
-                    </div>
-
                     <div className="absolute bottom-8 right-8 transition-all duration-500 transform translate-y-2 group-hover:translate-y-0 opacity-80 group-hover:opacity-100">
-                       <div className="w-14 h-14 rounded-full bg-gradient-to-b from-[#2a1b0e] to-[#0f0803] text-[#d4af37] flex items-center justify-center text-2xl shadow-[0_4px_8px_rgba(0,0,0,0.4)] border border-[#d4af37]/20">
-                          →
-                       </div>
+                       <div className="w-14 h-14 rounded-full bg-gradient-to-b from-[#2a1b0e] to-[#0f0803] text-[#d4af37] flex items-center justify-center text-2xl shadow-[0_4px_8px_rgba(0,0,0,0.4)] border border-[#d4af37]/20">💬</div>
                     </div>
                 </div>
             </div>
          </div>
 
-         {/* AGENT 2: VICTORIA CELESTIA - HEAVY BRONZE PLATE STYLE */}
+         {/* AGENT 2: VICTORIA CELESTIA */}
          <div 
             onClick={() => handleSelection('victoria')}
             className="group relative cursor-pointer transform hover:-translate-y-2 transition-transform duration-500"
          >
-             {/* The Bronze Plate Container */}
             <div className="relative rounded-[2.5rem] p-10 overflow-hidden shadow-[0_25px_50px_-12px_rgba(0,0,0,0.7)] transition-all duration-500 group-hover:shadow-[0_35px_60px_-15px_rgba(212,175,55,0.15)]
                  bg-gradient-to-br from-[#785a3c] via-[#a88856] to-[#4a3420]
                  border-t border-l border-[#d4af37]/40 border-b-[6px] border-r-[6px] border-[#2a1b0e]/60"
             >
-                {/* Brushed Metal Texture Overlay */}
                 <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/brushed-alum-dark.png')] mix-blend-overlay pointer-events-none"></div>
-                <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-black/20 pointer-events-none mix-blend-overlay"></div>
-
                 <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity transform group-hover:-rotate-12 duration-700 mix-blend-multiply">
                    <span className="text-9xl text-[#2a1b0e]">⚖️</span>
                 </div>
-
                 <div className="relative z-10">
                     <div className="flex items-center gap-2 mb-8">
-                       <span className="text-[9px] uppercase tracking-[0.3em] font-black text-[#3e2718] drop-shadow-[0_1px_0_rgba(255,255,255,0.2)]">Celestial_Relationship_Module</span>
+                       <span className="text-[9px] uppercase tracking-[0.3em] font-black text-[#3e2718]">Celestial_Relationship_Module</span>
                        <div className="w-2 h-2 rounded-full bg-[#3e2718] shadow-inner"></div>
                     </div>
-
-                    {/* Engraved Text Effect */}
-                    <h2 className="font-serif text-5xl mb-4 text-[#2a1b0e] font-bold drop-shadow-[0_1px_1px_rgba(255,255,255,0.2)]" style={{ textShadow: 'inset 1px 1px 2px rgba(0,0,0,0.5)' }}>
+                    <h2 className="font-serif text-5xl mb-4 text-[#2a1b0e] font-bold" style={{ textShadow: 'inset 1px 1px 2px rgba(0,0,0,0.5)' }}>
                         Victoria Celestia
                     </h2>
-                    
                     <div className="flex gap-2 mb-8 flex-wrap">
                        {['RELATIONSHIPS', 'CAREER', 'SYNASTRY'].map(tag => (
-                          <span key={tag} className="text-[9px] uppercase tracking-widest text-[#3e2718] border border-[#3e2718]/20 px-3 py-1.5 rounded-lg bg-[#3e2718]/5 font-bold drop-shadow-[0_1px_0_rgba(255,255,255,0.2)]">{tag}</span>
+                          <span key={tag} className="text-[9px] uppercase tracking-widest text-[#3e2718] border border-[#3e2718]/20 px-3 py-1.5 rounded-lg bg-[#3e2718]/5 font-bold">{tag}</span>
                        ))}
                     </div>
-
                     <div className="bg-[#2a1b0e]/10 border border-[#2a1b0e]/10 p-6 rounded-2xl mb-8 shadow-inner">
-                       <p className="font-sans text-sm text-[#1a0f05] leading-relaxed italic font-medium drop-shadow-[0_1px_0_rgba(255,255,255,0.1)]">
-                          "Eine warme weibliche Stimme, fokussiert auf Beziehungsdynamik und Berufsastrologie — klar, unterstützend und geerdet."
+                       <p className="font-sans text-sm text-[#1a0f05] leading-relaxed italic font-medium">
+                          "Ich beleuchte deine Beziehungsdynamik. Starte die Konversation jetzt."
                        </p>
                     </div>
-
-                    <div className="space-y-4 pt-4 border-t border-[#3e2718]/10">
-                       <ul className="space-y-3">
-                          <li className="flex items-center gap-3 text-sm text-[#2a1b0e] font-semibold">
-                             <span className="text-[#3e2718] opacity-60 group-hover:opacity-100 transition-opacity">✓</span> Warme weibliche Stimme
-                          </li>
-                          <li className="flex items-center gap-3 text-sm text-[#2a1b0e] font-semibold">
-                             <span className="text-[#3e2718] opacity-60 group-hover:opacity-100 transition-opacity">✓</span> Fokus auf Beziehungen & Beruf
-                          </li>
-                       </ul>
-                    </div>
-
                     <div className="absolute bottom-8 right-8 transition-all duration-500 transform translate-y-2 group-hover:translate-y-0 opacity-80 group-hover:opacity-100">
-                       <div className="w-14 h-14 rounded-full bg-gradient-to-b from-[#2a1b0e] to-[#0f0803] text-[#d4af37] flex items-center justify-center text-2xl shadow-[0_4px_8px_rgba(0,0,0,0.4)] border border-[#d4af37]/20">
-                          →
-                       </div>
+                       <div className="w-14 h-14 rounded-full bg-gradient-to-b from-[#2a1b0e] to-[#0f0803] text-[#d4af37] flex items-center justify-center text-2xl shadow-[0_4px_8px_rgba(0,0,0,0.4)] border border-[#d4af37]/20">💬</div>
                     </div>
                 </div>
             </div>
          </div>
 
-      </div>
-
-      {/* --- FOOTER / DISCLAIMER --- */}
-      <div className="max-w-4xl mx-auto text-center border-t border-white/5 pt-12 pb-6">
-         <div className="text-[10px] uppercase tracking-[0.3em] text-slate-600 font-black mb-4">Transparency Protocol</div>
-         <p className="text-[9px] text-slate-600 leading-relaxed max-w-2xl mx-auto">
-            The astrological and calculating agents provided herein are for entertainment and reflective purposes only. They do not predict the future with absolute certainty nor do they offer professional financial, legal, or medical advice. User discretion is advised when interpreting quantum synthesis outputs.
-         </p>
-         
-         <div className="mt-8 flex justify-between items-center px-8 opacity-20 hover:opacity-100 transition-opacity">
-             <div className="w-8 h-8 rounded-full bg-emerald-900/10 flex items-center justify-center text-emerald-800 font-bold">⚡</div>
-             <div className="w-8 h-8 rounded-full bg-yellow-900/10 flex items-center justify-center text-yellow-800 font-bold font-serif">1</div>
-         </div>
       </div>
     </div>
   );

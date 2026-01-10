@@ -58,31 +58,32 @@ const ELEMENT_COLORS: Record<string, string> = {
   "Water": "#3B82F6"
 };
 
-// 3D Gradients for Plastic Look
+// ENHANCED 3D Volumetric Styles (Plastic/Glassy Look)
 const BODY_STYLES: Record<string, any> = {
   'Sun': {
-    background: 'radial-gradient(circle at 35% 35%, #FFFBEB 0%, #FCD34D 20%, #F59E0B 50%, #D97706 100%)',
-    boxShadow: '0 0 40px rgba(245, 158, 11, 0.6), inset -4px -4px 8px rgba(180, 83, 9, 0.5)'
+    // Intense glowing core with sharp specular highlight
+    background: 'radial-gradient(circle at 30% 30%, #FFFFFF 0%, #FFD700 15%, #F59E0B 45%, #D97706 85%, #B45309 100%)',
+    boxShadow: '0 0 60px rgba(255, 180, 0, 0.7), inset -10px -10px 20px rgba(180, 83, 9, 0.6), inset 2px 2px 5px rgba(255, 255, 255, 0.9)'
   },
   'Moon': {
-    background: 'radial-gradient(circle at 35% 35%, #F3F4F6 0%, #D1D5DB 40%, #9CA3AF 100%)',
-    boxShadow: '0 0 15px rgba(255, 255, 255, 0.3), inset -3px -3px 6px rgba(0,0,0,0.5)'
+    background: 'radial-gradient(circle at 30% 30%, #FFFFFF 0%, #E5E7EB 20%, #9CA3AF 60%, #4B5563 100%)',
+    boxShadow: 'inset -6px -6px 10px rgba(0,0,0,0.6), 0 0 15px rgba(255,255,255,0.3)'
   },
   'Fire': {
-    background: 'radial-gradient(circle at 30% 30%, #FCA5A5 0%, #EF4444 40%, #991B1B 100%)',
-    boxShadow: '0 0 10px rgba(239, 68, 68, 0.4), inset -3px -3px 5px rgba(0,0,0,0.4)'
+    background: 'radial-gradient(circle at 30% 30%, #FECACA 0%, #EF4444 30%, #991B1B 80%, #450A0A 100%)',
+    boxShadow: 'inset -5px -5px 10px rgba(50, 0, 0, 0.7), 0 0 20px rgba(239, 68, 68, 0.5)'
   },
   'Water': {
-    background: 'radial-gradient(circle at 30% 30%, #93C5FD 0%, #3B82F6 40%, #1E40AF 100%)',
-    boxShadow: '0 0 10px rgba(59, 130, 246, 0.4), inset -3px -3px 5px rgba(0,0,0,0.4)'
+    background: 'radial-gradient(circle at 30% 30%, #BFDBFE 0%, #3B82F6 30%, #1E40AF 80%, #172554 100%)',
+    boxShadow: 'inset -5px -5px 10px rgba(0, 0, 60, 0.7), 0 0 20px rgba(59, 130, 246, 0.5)'
   },
   'Air': {
-    background: 'radial-gradient(circle at 30% 30%, #FDE68A 0%, #F59E0B 40%, #B45309 100%)',
-    boxShadow: '0 0 10px rgba(245, 158, 11, 0.4), inset -3px -3px 5px rgba(0,0,0,0.4)'
+    background: 'radial-gradient(circle at 30% 30%, #FEF3C7 0%, #F59E0B 30%, #B45309 80%, #78350F 100%)',
+    boxShadow: 'inset -5px -5px 10px rgba(60, 30, 0, 0.7), 0 0 20px rgba(245, 158, 11, 0.5)'
   },
   'Earth': {
-    background: 'radial-gradient(circle at 30% 30%, #6EE7B7 0%, #10B981 40%, #065F46 100%)',
-    boxShadow: '0 0 10px rgba(16, 185, 129, 0.4), inset -3px -3px 5px rgba(0,0,0,0.4)'
+    background: 'radial-gradient(circle at 30% 30%, #A7F3D0 0%, #10B981 30%, #065F46 80%, #064E3B 100%)',
+    boxShadow: 'inset -5px -5px 10px rgba(0, 40, 20, 0.7), 0 0 20px rgba(16, 185, 129, 0.5)'
   }
 };
 
@@ -420,22 +421,25 @@ export const CosmicWeather: React.FC<Props> = ({ transits, isLoading, title, dis
 
               // Scale determination for visual part only
               const isSun = planet.body === 'Sun';
-              const baseSize = isSun ? 'w-10 h-10' : (planet.body === 'Moon' ? 'w-4 h-4' : 'w-5 h-5');
+              const baseSize = isSun ? 'w-16 h-16' : (planet.body === 'Moon' ? 'w-4 h-4' : 'w-5 h-5');
               
+              // Only scale if not Sun (Sun stays large and central)
               const visualScaleClass = isSelected 
                  ? 'scale-[1.5]' 
                  : (isHovered ? 'scale-125' : 'scale-100');
+                 
+              const sunZIndex = isSun ? 'z-40' : 'z-30';
 
               return (
                 <div 
                   key={planet.body}
-                  className={`absolute z-30 flex items-center justify-center cursor-pointer`}
+                  className={`absolute ${sunZIndex} flex items-center justify-center cursor-pointer`}
                   style={{
                     left: `${(planet.x / 300) * 100}%`,
                     top: `${(planet.y / 300) * 100}%`,
                     transform: 'translate(-50%, -50%) rotateX(-58deg)',
-                    width: isSun ? '48px' : '32px', // Slight hit area adjustment
-                    height: isSun ? '48px' : '32px'
+                    width: isSun ? '64px' : '32px', // Increase hit area for Sun
+                    height: isSun ? '64px' : '32px'
                   }}
                   onMouseEnter={() => setHoveredPlanet(planet.body)}
                   onMouseLeave={() => setHoveredPlanet(null)}
@@ -445,11 +449,11 @@ export const CosmicWeather: React.FC<Props> = ({ transits, isLoading, title, dis
                     className={`${baseSize} rounded-full transition-all duration-500 relative ${visualScaleClass} ${isSelected ? 'z-50' : 'z-20'}`}
                     style={{
                         ...style,
-                        filter: isSelected ? 'brightness(1.2)' : 'none'
+                        filter: isSelected ? 'brightness(1.2) contrast(1.1)' : 'none'
                     }}
                   >
                     {isSelected && <div className="absolute inset-0 rounded-full animate-ping bg-white/40"></div>}
-                    {isSun && <div className="absolute inset-[-10px] rounded-full bg-orange-400/20 blur-md animate-pulse"></div>}
+                    {isSun && <div className="absolute inset-[-15px] rounded-full bg-orange-400/20 blur-xl animate-pulse"></div>}
                   </div>
                 </div>
               );

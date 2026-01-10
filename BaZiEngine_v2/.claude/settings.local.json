@@ -1,7 +1,0 @@
-{
-  "enabledMcpjsonServers": [
-    "claude-flow",
-    "ruv-swarm"
-  ],
-  "enableAllProjectMcpServers": true
-}

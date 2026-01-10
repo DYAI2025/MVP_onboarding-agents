@@ -14,7 +14,6 @@ import { runFusionAnalysis } from './services/astroPhysics';
 import { generateSymbol, SymbolConfig } from './services/geminiService';
 import { fetchCurrentTransits, fetchTransitsForDate } from './services/transitService';
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
-import { saveReading } from './services/supabaseClient';
 
 type ViewType = 'dashboard' | 'quizzes' | 'character_dashboard' | 'agent_selection' | 'matrix';
 
@@ -89,11 +88,6 @@ function AppContent() {
       }
       setAstroState(CalculationState.COMPLETE);
       
-      // Save to Supabase (Non-blocking)
-      saveReading(data, result).then((uid) => {
-          console.log("Reading saved for user:", uid);
-      });
-
       // Smooth scroll to results after a slight delay for layout shift
       setTimeout(() => {
         document.getElementById('analysis-section')?.scrollIntoView({ behavior: 'smooth' });
