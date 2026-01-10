@@ -105,15 +105,15 @@ export const MatrixDocsView: React.FC = () => {
                  {testStatus === 'idle' && "// Warten auf Test-Initialisierung..."}
                  {testStatus === 'testing' && (
                     <div className="space-y-1">
-                      <div>{'> '}Initialisiere Handshake...</div>
-                      <div>{'> '}GET /api/transits</div>
-                      <div className="animate-pulse">{'> '}Warten auf Antwort...</div>
+                      <div>&gt; Initialisiere Handshake...</div>
+                      <div>&gt; GET /api/transits</div>
+                      <div className="animate-pulse">&gt; Warten auf Antwort...</div>
                     </div>
                  )}
                  {(testStatus === 'success' || testStatus === 'failed') && (
                     <div className="space-y-2">
-                       {testStatus === 'success' && <div className="text-emerald-400">{'> '}Verbindung erfolgreich hergestellt.</div>}
-                       {testStatus === 'failed' && <div className="text-red-400">{'> '}Verbindung fehlgeschlagen. Netzwerkfehler.</div>}
+                       {testStatus === 'success' && <div className="text-emerald-400">&gt; Verbindung erfolgreich hergestellt.</div>}
+                       {testStatus === 'failed' && <div className="text-red-400">&gt; Verbindung fehlgeschlagen. Netzwerkfehler.</div>}
                        {payloadPreview && (
                          <div className="mt-4 pt-4 border-t border-gray-800">
                            <div className="text-gray-500 mb-1">// Sample Response Payload:</div>
@@ -208,7 +208,7 @@ export const MatrixDocsView: React.FC = () => {
                   <span className="text-[10px] uppercase tracking-widest font-bold text-amber-700 dark:text-amber-400">Implementation Note</span>
                </div>
                <p className="text-xs text-amber-800 dark:text-amber-200/70 leading-relaxed">
-                  Falls die externe API nicht erreichbar ist (Timeout {'>'} 5000ms), schaltet das System automatisch auf das interne <code className="font-mono bg-amber-200/50 dark:bg-amber-900/50 px-1 rounded">astroPhysics.ts</code> Modul um. Dies gewährleistet 100% Uptime für den Benutzer, auch bei Netzwerkstörungen.
+                  Falls die externe API nicht erreichbar ist (Timeout &gt; 5000ms), schaltet das System automatisch auf das interne <code className="font-mono bg-amber-200/50 dark:bg-amber-900/50 px-1 rounded">astroPhysics.ts</code> Modul um. Dies gewährleistet 100% Uptime für den Benutzer, auch bei Netzwerkstörungen.
                </p>
             </div>
          </div>
