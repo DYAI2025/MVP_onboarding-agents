@@ -93,8 +93,8 @@ export const ResultSymbol: React.FC<Props> = ({ imageUrl, synthesis, sunSign }) 
                    <SmartImage 
                     src={imageUrl} 
                     alt="Generated Cosmic Symbol" 
-                    // Using w-full h-full with slight scale to ensure coverage, center position is key
-                    className="w-full h-full object-cover object-center transform scale-105 transition-transform duration-700 group-hover:scale-110"
+                    // Added continuous slow rotation animation
+                    className="w-full h-full object-cover object-center transform scale-105 transition-transform duration-700 group-hover:scale-110 animate-[spin_60s_linear_infinite]"
                     containerClassName="w-full h-full flex items-center justify-center"
                     priority={true}
                     onError={() => setHasError(true)}

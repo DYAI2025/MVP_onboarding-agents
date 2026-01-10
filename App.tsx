@@ -21,23 +21,30 @@ function AppContent() {
   const [currentView, setCurrentView] = useState<ViewType>('dashboard');
   const { t } = useLanguage();
   
-  // Initialize theme from localStorage
+  // Initialize theme from localStorage with system preference fallback
   const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window === 'undefined') return false;
     try {
       const savedTheme = localStorage.getItem('astro_theme');
-      return savedTheme === 'dark';
+      if (savedTheme) {
+        return savedTheme === 'dark';
+      }
+      // Fallback to system preference if no saved theme found
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
     } catch (e) {
-      return false;
+      console.warn('Theme preference access failed:', e);
+      return false; // Default fallback
     }
   });
 
-  // Apply theme class and save to localStorage
+  // Apply theme class and save to localStorage whenever isDarkMode changes
   useEffect(() => {
+    const root = document.documentElement;
     if (isDarkMode) {
-      document.documentElement.classList.add('dark');
+      root.classList.add('dark');
       localStorage.setItem('astro_theme', 'dark');
     } else {
-      document.documentElement.classList.remove('dark');
+      root.classList.remove('dark');
       localStorage.setItem('astro_theme', 'light');
     }
   }, [isDarkMode]);

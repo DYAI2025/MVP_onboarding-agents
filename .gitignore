@@ -11,22 +11,6 @@ node_modules
 dist
 dist-ssr
 *.local
-.env
-
-# Vercel
-.vercel
-
-# Python
-venv/
-BaZiEngine_v2/.env
-BaZiEngine_v2/**/venv/
-BaZiEngine_v2/**/__pycache__/
-*.pyc
-
-# Hive-mind & Claude Flow
-.claude-flow/
-.hive-mind/
-.swarm/memory.db*
 
 # Editor directories and files
 .vscode/*

@@ -12,19 +12,21 @@ interface Props {
   onAgentSelect: (agentId: string) => void;
 }
 
-// ElevenLabs Agent IDs
+// REPLACE THESE WITH YOUR ACTUAL ELEVEN LABS AGENT IDs
 const AGENT_CONFIGS = {
   levi: {
     id: 'levi',
     name: 'Levi Bazi',
     role: 'Quantum_BaZi_Protocols',
-    elevenLabsId: 'agent_9001kdhah7vrfh3rd05pakg8vppk'
+    // Placeholder ID - User needs to create an agent in Eleven Labs and paste ID here
+    elevenLabsId: 'replace-with-levi-agent-id' 
   },
   victoria: {
     id: 'victoria',
     name: 'Victoria Celestia',
     role: 'Celestial_Relationship_Module',
-    elevenLabsId: 'agent_1701kdekhhref78v6547amzrg1nb'
+    // Placeholder ID - User needs to create an agent in Eleven Labs and paste ID here
+    elevenLabsId: 'replace-with-victoria-agent-id'
   }
 };
 
@@ -90,7 +92,7 @@ export const AgentSelectionView: React.FC<Props> = ({ result, symbolUrl, onAgent
                        <SmartImage 
                          src={symbolUrl} 
                          alt="Symbol" 
-                         containerClassName="w-full h-full flex items-center justify-center"
+                         containerClassName="w-full h-full"
                          className="w-full h-full object-cover object-center" 
                        />
                     </div>
@@ -164,12 +166,13 @@ export const AgentSelectionView: React.FC<Props> = ({ result, symbolUrl, onAgent
                  
                  {/* Main Container */}
                  <div className="w-80 h-80 md:w-[28rem] md:h-[28rem] rounded-full border border-white/10 bg-[#1E293B]/20 backdrop-blur-xl shadow-[0_0_60px_rgba(0,0,0,0.5)] flex items-center justify-center relative overflow-hidden transition-transform duration-700 hover:scale-[1.02]">
-                    <div className="w-[80%] h-[80%] rounded-full overflow-hidden relative z-10 border border-white/10 bg-black/40 shadow-2xl flex items-center justify-center">
+                    <div className="w-[80%] h-[80%] rounded-full overflow-hidden relative z-10 border border-white/10 bg-black/40 shadow-2xl">
                          <SmartImage 
                            src={symbolUrl} 
                            alt="Cosmic Fusion Symbol" 
-                           containerClassName="w-full h-full flex items-center justify-center"
-                           className="w-[125%] h-[125%] max-w-none object-cover object-center transition-transform duration-[2s] ease-in-out group-hover:scale-[1.35] group-hover:rotate-3" 
+                           containerClassName="w-full h-full"
+                           // Using absolute positioning to perfectly center the zoomed image
+                           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[125%] h-[125%] max-w-none object-cover transition-transform duration-[2s] ease-in-out group-hover:scale-[1.35] group-hover:rotate-3" 
                            priority={true}
                          />
                     </div>
