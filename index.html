@@ -149,6 +149,26 @@
 </head>
   <body>
     <div id="root"></div>
+    <elevenlabs-convai agent-id="YOUR_AGENT_ID_HERE"></elevenlabs-convai>
+    <script src="https://elevenlabs.io/convai-widget/index.js" async type="text/javascript"></script>
+    <script>
+        // Data Injection Handler
+        // The React App will dispatch a custom event 'astro-data-ready' when calculation is done.
+        // We catch it here and update the widget's knowledge via dynamic variables or system prompt override if supported.
+        window.addEventListener('astro-data-ready', (e) => {
+            const data = e.detail;
+            console.log("ElevenLabs Context Received:", data);
+            
+            // OPTION 1: If using the ConvAI widget, we can try to set attributes or use the internal API if exposed.
+            // Currently, the best way for the widget to "know" is via the Client Tools or context if we were initializing it manually.
+            // For the <elevenlabs-convai> element, it might not expose a direct "push context" method easily without re-init.
+            
+            // STRATEGY: We assume the Agent is configured to fetch the data from the DB using the user ID.
+            // But we can also set a global variable that the agent's client-side tool could theoretically read if we wrote a custom client tool.
+            
+            // For this MVP, we log it. The real persistence happens in Supabase, and the Agent should fetch it from there.
+        });
+    </script>
     <script type="module" src="/index.tsx"></script>
   </body>
 </html>

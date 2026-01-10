@@ -1,29 +1,8 @@
 
 import { BirthData, FusionResult, WesternAnalysis, EasternAnalysis } from '../types';
 
-// --- Western Zodiac Data ---
+// --- Constants ---
 
-const ZODIAC_SIGNS = [
-  "Capricorn", "Aquarius", "Pisces", "Aries", "Taurus", "Gemini",
-  "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius"
-];
-
-// Standard Astronomical Zodiac (0° = Aries start)
-const ASTRONOMICAL_ZODIAC = [
-  "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
-  "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"
-];
-
-const ZODIAC_ELEMENTS: Record<string, string> = {
-  "Aries": "Fire", "Leo": "Fire", "Sagittarius": "Fire",
-  "Taurus": "Earth", "Virgo": "Earth", "Capricorn": "Earth",
-  "Gemini": "Air", "Libra": "Air", "Aquarius": "Air",
-  "Cancer": "Water", "Scorpio": "Water", "Pisces": "Water"
-};
-
-// --- Eastern Ba Zi Data (Sexagenary Cycle) ---
-
-// The 10 Heavenly Stems (Gan) - Correlation to Elements
 const HEAVENLY_STEMS = [
   { name: "Jia", element: "Wood" },  // 0: Yang Wood
   { name: "Yi", element: "Wood" },   // 1: Yin Wood
@@ -37,7 +16,6 @@ const HEAVENLY_STEMS = [
   { name: "Gui", element: "Water" }  // 9: Yin Water
 ];
 
-// The 12 Earthly Branches (Zhi) - Correlation to Animals
 const EARTHLY_BRANCHES = [
   "Rat",    // 0: Zi (Water)
   "Ox",     // 1: Chou (Earth)
@@ -53,118 +31,80 @@ const EARTHLY_BRANCHES = [
   "Pig"     // 11: Hai (Water)
 ];
 
-// Approximate start days of Solar Terms for each month (Jan - Dec)
-const SOLAR_TERM_START_DAYS = [6, 4, 6, 5, 6, 6, 7, 8, 8, 8, 7, 7];
+const ASTRONOMICAL_ZODIAC = [
+  "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
+  "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"
+];
 
-// --- Calculation Logic ---
-
-const getWesternSign = (date: Date): string => {
-  const day = date.getDate();
-  const month = date.getMonth() + 1;
-  
-  if ((month == 1 && day <= 19) || (month == 12 && day >= 22)) return "Capricorn";
-  if ((month == 1 && day >= 20) || (month == 2 && day <= 18)) return "Aquarius";
-  if ((month == 2 && day >= 19) || (month == 3 && day <= 20)) return "Pisces";
-  if ((month == 3 && day >= 21) || (month == 4 && day <= 19)) return "Aries";
-  if ((month == 4 && day >= 20) || (month == 5 && day <= 20)) return "Taurus";
-  if ((month == 5 && day >= 21) || (month == 6 && day <= 20)) return "Gemini";
-  if ((month == 6 && day >= 21) || (month == 7 && day <= 22)) return "Cancer";
-  if ((month == 7 && day >= 23) || (month == 8 && day <= 22)) return "Leo";
-  if ((month == 8 && day >= 23) || (month == 9 && day <= 22)) return "Virgo";
-  if ((month == 9 && day >= 23) || (month == 10 && day <= 22)) return "Libra";
-  if ((month == 10 && day >= 23) || (month == 11 && day <= 21)) return "Scorpio";
-  if ((month == 11 && day >= 22) || (month == 12 && day <= 21)) return "Sagittarius";
-  return "Aries";
+const ZODIAC_ELEMENTS: Record<string, string> = {
+  "Aries": "Fire", "Leo": "Fire", "Sagittarius": "Fire",
+  "Taurus": "Earth", "Virgo": "Earth", "Capricorn": "Earth",
+  "Gemini": "Air", "Libra": "Air", "Aquarius": "Air",
+  "Cancer": "Water", "Scorpio": "Water", "Pisces": "Water"
 };
 
-const calculateBaZi = (date: Date) => {
-  const year = date.getFullYear();
-  const month = date.getMonth(); 
-  const day = date.getDate();
+// --- Backend API Types ---
 
-  let baZiYear = year;
-  if (month < 1 || (month === 1 && day < 4)) {
-    baZiYear -= 1;
-  }
-  
-  const yearStemIndex = (baZiYear - 4) % 10;
-  const normalizedYearStem = yearStemIndex < 0 ? yearStemIndex + 10 : yearStemIndex;
-  
-  const yearBranchIndex = (baZiYear - 4) % 12;
-  const normalizedYearBranch = yearBranchIndex < 0 ? yearBranchIndex + 12 : yearBranchIndex;
+interface WesternBodyResponse {
+  name: string;
+  longitude: number;
+  zodiac_sign: number; // 0=Aries
+  degree_in_sign: number;
+}
 
-  const yearElement = HEAVENLY_STEMS[normalizedYearStem].element;
-  const yearAnimal = EARTHLY_BRANCHES[normalizedYearBranch];
-
-  const cutoffDay = SOLAR_TERM_START_DAYS[month];
-  let monthBranchIndex;
-  
-  const solarMonthMapping = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0];
-  
-  if (day >= cutoffDay) {
-    monthBranchIndex = solarMonthMapping[month];
-  } else {
-    const prevMonthIdx = month === 0 ? 11 : month - 1;
-    monthBranchIndex = solarMonthMapping[prevMonthIdx];
-  }
-
-  const monthAnimal = EARTHLY_BRANCHES[monthBranchIndex];
-
-  const refDate = new Date(Date.UTC(1900, 0, 1));
-  const targetDate = new Date(Date.UTC(year, month, day));
-  
-  const diffTime = targetDate.getTime() - refDate.getTime();
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-  
-  let dayStemIndex = (4 + diffDays) % 10;
-  if (dayStemIndex < 0) dayStemIndex += 10;
-  
-  let dayBranchIndex = (10 + diffDays) % 12;
-  if (dayBranchIndex < 0) dayBranchIndex += 12;
-
-  const dayElement = HEAVENLY_STEMS[dayStemIndex].element;
-  const dayStemName = HEAVENLY_STEMS[dayStemIndex].name;
-  const dayPolarity = dayStemIndex % 2 === 0 ? 'Yang' : 'Yin';
-
-  return {
-    yearAnimal,
-    yearElement,
-    monthAnimal,
-    dayElement,
-    dayStemName,
-    dayPolarity,
-    dayStemIndex
+interface WesternChartResponse {
+  bodies: Record<string, WesternBodyResponse>;
+  houses: Record<string, number>;
+  angles: {
+    Ascendant: number;
+    MC: number;
+    Vertex: number;
   };
-};
+}
 
-const calculateAscendantSim = (sign: string, hour: number) => {
-  const signIndex = ZODIAC_SIGNS.indexOf(sign);
-  const offset = Math.floor((hour - 6) / 2); 
-  const ascIndex = (signIndex + offset + 12) % 12;
-  return ZODIAC_SIGNS[ascIndex];
-};
+interface BaziPillarResponse {
+    text: string;
+    stem: number;
+    branch: number;
+}
 
-const calculateMoonSign = (date: Date): string => {
-  const jd = (date.getTime() / 86400000) + 2440587.5;
-  const d = jd - 2451545.0;
-  const L = 218.316 + 13.176396 * d; 
-  const M = 134.963 + 13.064993 * d;
-  
-  const normalize = (deg: number) => {
-    deg = deg % 360;
-    if (deg < 0) deg += 360;
-    return deg;
-  };
-  const toRad = (deg: number) => deg * (Math.PI / 180);
+interface BaziChartResponse {
+    pillars: {
+        year: BaziPillarResponse;
+        month: BaziPillarResponse;
+        day: BaziPillarResponse;
+        hour: BaziPillarResponse;
+    };
+}
 
-  let lambda = L + 6.289 * Math.sin(toRad(normalize(M)));
-  lambda = normalize(lambda);
+// --- Helper Functions ---
 
-  const signIndex = Math.floor(lambda / 30);
-  return ASTRONOMICAL_ZODIAC[signIndex % 12];
-};
+async function geocodeLocation(location: string): Promise<{ lat: number, lon: number }> {
+    try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location)}&format=json&limit=1`, {
+            headers: {
+                'User-Agent': 'AstroOnboardingApp/1.0'
+            }
+        });
+        const data = await response.json();
+        if (data && data.length > 0) {
+            return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+        }
+    } catch (e) {
+        console.warn("Geocoding failed, using default (Berlin)", e);
+    }
+    return { lat: 52.52, lon: 13.4050 }; // Default Berlin
+}
 
-// --- Synthesis Logic (Enhanced) ---
+function getZodiacSignName(index: number): string {
+    return ASTRONOMICAL_ZODIAC[index % 12];
+}
+
+function getAscendantSign(ascLon: number): string {
+    return ASTRONOMICAL_ZODIAC[Math.floor(ascLon / 30) % 12];
+}
+
+// --- Synthesis Logic (Preserved) ---
 
 const synthesizeIdentity = (western: WesternAnalysis, eastern: EasternAnalysis) => {
   const { element: westernElement, sunSign, moonSign, ascendant } = western;
@@ -260,58 +200,87 @@ const synthesizeIdentity = (western: WesternAnalysis, eastern: EasternAnalysis) 
   return { synthesisTitle, synthesisDescription, prompt };
 };
 
-// --- Main Analysis Functions ---
-
-const calculateLocalAnalysis = (dateObj: Date): { western: WesternAnalysis, eastern: EasternAnalysis } => {
-  const hour = dateObj.getHours();
-  
-  const sunSign = getWesternSign(dateObj);
-  const ascendant = calculateAscendantSim(sunSign, hour);
-  const moonSign = calculateMoonSign(dateObj);
-  const westernElement = ZODIAC_ELEMENTS[sunSign] || "Air";
-  
-  const baZi = calculateBaZi(dateObj);
-
-  return {
-    western: {
-      sunSign,
-      moonSign,
-      ascendant,
-      element: westernElement
-    },
-    eastern: {
-      yearAnimal: baZi.yearAnimal,
-      yearElement: baZi.yearElement,
-      monthAnimal: baZi.monthAnimal,
-      dayElement: baZi.dayElement,
-      dayStem: baZi.dayStemName,
-      dayPolarity: baZi.dayPolarity
-    }
-  };
-};
+// --- Main Async Function ---
 
 export const runFusionAnalysis = async (data: BirthData): Promise<FusionResult> => {
-  const dateObj = new Date(data.date + 'T' + data.time);
+  // 1. Geocode
+  const { lat, lon } = await geocodeLocation(data.location);
+
+  // 2. Prepare payload
+  const isoDate = `${data.date}T${data.time}:00`;
   
-  let western: WesternAnalysis;
-  let eastern: EasternAnalysis;
+  const payload = {
+    date: isoDate,
+    tz: "Europe/Berlin", // TODO: Determine TZ from Lat/Lon? For now assume Berlin/CET based on user base
+    lat,
+    lon
+  };
 
   try {
-    const local = calculateLocalAnalysis(dateObj);
-    western = local.western;
-    eastern = local.eastern;
+      // 3. Fetch Western
+      const westernRes = await fetch('/api/bazi/calculate/western', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+      });
+      if (!westernRes.ok) throw new Error("Western calc failed");
+      const westernData: WesternChartResponse = await westernRes.json();
+
+      // 4. Fetch BaZi
+      const baziRes = await fetch('/api/bazi/calculate/bazi', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...payload, standard: "CIVIL", boundary: "midnight" })
+      });
+      if (!baziRes.ok) throw new Error("BaZi calc failed");
+      const baziData: BaziChartResponse = await baziRes.json();
+
+      // 5. Map to Frontend Types
+      const sunSign = getZodiacSignName(westernData.bodies["Sun"].zodiac_sign);
+      const moonSign = getZodiacSignName(westernData.bodies["Moon"].zodiac_sign);
+      const ascendant = getAscendantSign(westernData.angles.Ascendant);
+      const westernElement = ZODIAC_ELEMENTS[sunSign] || "Air";
+
+      const yearPillar = baziData.pillars.year;
+      const dayPillar = baziData.pillars.day;
+
+      const yearAnimal = EARTHLY_BRANCHES[yearPillar.branch];
+      const yearElementKey = HEAVENLY_STEMS[yearPillar.stem].element; // "Wood"
+      
+      const dayElementKey = HEAVENLY_STEMS[dayPillar.stem].element;
+      const dayStemName = HEAVENLY_STEMS[dayPillar.stem].name;
+      const dayPolarity = dayPillar.stem % 2 === 0 ? 'Yang' : 'Yin';
+
+      const western: WesternAnalysis = {
+          sunSign,
+          moonSign,
+          ascendant,
+          element: westernElement
+      };
+
+      const eastern: EasternAnalysis = {
+          yearAnimal,
+          yearElement: yearElementKey,
+          monthAnimal: EARTHLY_BRANCHES[baziData.pillars.month.branch],
+          dayElement: dayElementKey,
+          dayStem: dayStemName,
+          dayPolarity
+      };
+
+      // 6. Synthesize
+      const { synthesisTitle, synthesisDescription, prompt } = synthesizeIdentity(western, eastern);
+
+      return {
+          synthesisTitle,
+          synthesisDescription,
+          elementMatrix: `${western.element} (Sun) / ${eastern.dayElement} (Day Master)`,
+          western,
+          eastern,
+          prompt
+      };
+
   } catch (e) {
-    throw new Error("Local calculation failed");
+      console.error("Fusion Analysis Failed:", e);
+      throw e;
   }
-
-  const { synthesisTitle, synthesisDescription, prompt } = synthesizeIdentity(western, eastern);
-
-  return {
-    synthesisTitle,
-    synthesisDescription,
-    elementMatrix: `${western.element} (Sun) / ${eastern.dayElement} (Day Master)`,
-    western,
-    eastern,
-    prompt
-  };
 };
