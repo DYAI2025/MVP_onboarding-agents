@@ -12,21 +12,19 @@ interface Props {
   onAgentSelect: (agentId: string) => void;
 }
 
-// REPLACE THESE WITH YOUR ACTUAL ELEVEN LABS AGENT IDs
+// ElevenLabs Agent IDs
 const AGENT_CONFIGS = {
   levi: {
     id: 'levi',
     name: 'Levi Bazi',
     role: 'Quantum_BaZi_Protocols',
-    // Placeholder ID - User needs to create an agent in Eleven Labs and paste ID here
-    elevenLabsId: 'replace-with-levi-agent-id' 
+    elevenLabsId: 'agent_9001kdhah7vrfh3rd05pakg8vppk'
   },
   victoria: {
     id: 'victoria',
     name: 'Victoria Celestia',
     role: 'Celestial_Relationship_Module',
-    // Placeholder ID - User needs to create an agent in Eleven Labs and paste ID here
-    elevenLabsId: 'replace-with-victoria-agent-id'
+    elevenLabsId: 'agent_1701kdekhhref78v6547amzrg1nb'
   }
 };
 
