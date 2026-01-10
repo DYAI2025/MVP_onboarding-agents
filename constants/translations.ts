@@ -12,14 +12,14 @@ export const translations = {
       theme_dark: "Nox"
     },
     input: {
-      title: "Astrological Base Data",
+      title: "Unlock Your Matrix",
       subtitle: "Protocol v1.2",
       date: "Date of Birth",
       time: "Time of Birth (24h)",
       location: "Place of Birth",
       placeholder_loc: "City, Country",
-      button_idle: "Start Validation",
-      button_loading: "Initializing..."
+      button_idle: "Reveal Cosmic Signature",
+      button_loading: "Calculating..."
     },
     weather: {
       title: "Cosmic Weather",
@@ -68,8 +68,8 @@ export const translations = {
       opt_eastern_desc: "Focus on Ba Zi Guardian Animal & 5-Element Flow.",
       eastern_active: "Eastern Focus Activated",
       eastern_active_sub: "Elemental Flow & Guardian Resonance",
-      btn_generate: "Create your Symbol",
-      btn_generating: "Weaving Cosmos..."
+      btn_generate: "Speak to Astro AI Agent",
+      btn_generating: "Connecting to Agents..."
     },
     result: {
       visual_link_unstable: "Visual_Link_Unstable",
@@ -134,14 +134,14 @@ export const translations = {
       theme_dark: "Nox"
     },
     input: {
-      title: "Astrologische Basisdaten",
+      title: "Schalte deine Matrix frei",
       subtitle: "Protokoll v1.2",
       date: "Geburtsdatum",
       time: "Geburtszeit (24h)",
       location: "Geburtsort",
       placeholder_loc: "Stadt, Land",
-      button_idle: "Validierung starten",
-      button_loading: "Initialisierung..."
+      button_idle: "Kosmische Signatur Enthüllen",
+      button_loading: "Berechne..."
     },
     weather: {
       title: "Kosmisches Wetter",
@@ -190,8 +190,8 @@ export const translations = {
       opt_eastern_desc: "Fokus auf Ba Zi Wächter-Tier & 5-Elemente-Fluss.",
       eastern_active: "Östlicher Fokus Aktiviert",
       eastern_active_sub: "Elementarer Fluss & Wächter-Resonanz",
-      btn_generate: "Erschaffe dein Symbol",
-      btn_generating: "Kosmische Webung..."
+      btn_generate: "Mit Astro AI Agent sprechen",
+      btn_generating: "Verbinde mit Agenten..."
     },
     result: {
       visual_link_unstable: "Visual_Link_Unstable",

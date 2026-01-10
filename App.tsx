@@ -47,7 +47,7 @@ function AppContent() {
   const [astroState, setAstroState] = useState<CalculationState>(CalculationState.IDLE);
   const [analysisResult, setAnalysisResult] = useState<FusionResult | null>(null);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
-  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  // Modal state is removed in favor of direct navigation
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
 
   const [transits, setTransits] = useState<Transit[]>([]);
@@ -104,18 +104,18 @@ function AppContent() {
     if (!analysisResult) return;
     setAstroState(CalculationState.GENERATING_IMAGE);
     try {
+      // Generate the symbol in background
       const imageUrl = await generateSymbol(analysisResult.prompt, customConfig);
       setGeneratedImage(imageUrl);
       setAstroState(CalculationState.FINISHED);
-      setTimeout(() => setShowCompletionModal(true), 500);
+      
+      // IMMEDIATE NAVIGATION: Move to Agent Selection view once image is ready
+      // This fulfills the requirement: "The user will know that they have to click that... and will be provided on the next page"
+      setCurrentView('agent_selection');
+      
     } catch (error) {
-      setAstroState(CalculationState.COMPLETE);
+      setAstroState(CalculationState.COMPLETE); // Revert to complete state on error so user can try again
     }
-  };
-
-  const enterAgentSelection = () => {
-    setShowCompletionModal(false);
-    setCurrentView('agent_selection');
   };
 
   const handleAgentSelect = (agentId: string) => {
@@ -144,21 +144,6 @@ function AppContent() {
         onToggleTheme={toggleTheme}
       />
       
-      {showCompletionModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-astro-bg/80 backdrop-blur-md animate-fade-in">
-          <div className="bg-astro-card border border-astro-border p-10 rounded-[2.5rem] shadow-2xl max-w-lg w-full text-center relative overflow-hidden">
-             <div className="mb-8">
-               <div className="w-20 h-20 mx-auto bg-astro-text text-white rounded-full flex items-center justify-center text-3xl mb-6 shadow-elevated animate-float">✦</div>
-               <h3 className="font-serif text-3xl text-astro-text mb-4">Initialisierung Abgeschlossen</h3>
-               <p className="font-sans text-astro-subtext leading-relaxed">Du hast dein inneres System der Sterne benannt. Wähle nun deinen Guide für die Reise.</p>
-             </div>
-             <button onClick={enterAgentSelection} className="w-full py-4 bg-astro-gold text-white font-serif italic text-xl rounded-xl shadow-lg hover:shadow-xl hover:bg-[#B89628] transition-all">
-               Connect to Agents →
-             </button>
-          </div>
-        </div>
-      )}
-
       <main className="max-w-[1600px] mx-auto p-6 md:p-12 lg:p-16">
         <div className="flex justify-between items-center mb-12 animate-fade-in">
           <div className="flex items-center gap-2 text-astro-subtext text-xs font-sans tracking-widest uppercase font-bold">
@@ -243,15 +228,7 @@ function AppContent() {
                     transits={transits}
                   />
                   
-                  {generatedImage && (
-                    <div className="animate-fade-in-up">
-                      <ResultSymbol 
-                        imageUrl={generatedImage} 
-                        synthesis={analysisResult.synthesisTitle} 
-                        sunSign={analysisResult.western.sunSign}
-                      />
-                    </div>
-                  )}
+                  {/* Note: ResultSymbol removed from here as it appears on the next page now */}
                 </div>
             )}
           </div>

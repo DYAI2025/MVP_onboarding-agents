@@ -3,16 +3,8 @@ import React, { useRef, useEffect, useState } from 'react';
 import { FusionResult } from '../types';
 import { SmartImage } from './SmartImage';
 
-// Define custom element for TypeScript
-// Using 'any' avoids namespace collision or resolution issues with React types in global scope
-// which was causing JSX.IntrinsicElements to break across the entire project.
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      'elevenlabs-convai': any;
-    }
-  }
-}
+// NOTE: Global JSX declaration removed to prevent IntrinsicElements conflict.
+// We handle the custom element via explicit cast below.
 
 interface Props {
   result: FusionResult;
@@ -74,6 +66,9 @@ export const AgentSelectionView: React.FC<Props> = ({ result, symbolUrl, onAgent
     }
   };
 
+  // Cast custom element to any to avoid TypeScript errors without polluting global namespace
+  const ElevenLabsConvai = 'elevenlabs-convai' as any;
+
   return (
     <div className="min-h-screen bg-[#0F1014] text-gray-300 font-sans p-6 md:p-12 relative overflow-hidden animate-fade-in">
       
@@ -93,8 +88,13 @@ export const AgentSelectionView: React.FC<Props> = ({ result, symbolUrl, onAgent
                  {/* Symbol Display */}
                  <div className="w-64 h-64 rounded-full border border-astro-gold/20 p-2 relative mb-8 shadow-[0_0_50px_rgba(212,175,55,0.1)]">
                     <div className="absolute inset-0 rounded-full border border-astro-gold/10 animate-[spin_30s_linear_infinite]"></div>
-                    <div className="w-full h-full rounded-full overflow-hidden bg-black relative z-10">
-                       <SmartImage src={symbolUrl} alt="Symbol" className="w-full h-full object-cover" />
+                    <div className="w-full h-full rounded-full overflow-hidden bg-black relative z-10 flex items-center justify-center">
+                       <SmartImage 
+                         src={symbolUrl} 
+                         alt="Symbol" 
+                         containerClassName="w-full h-full flex items-center justify-center"
+                         className="w-full h-full object-cover object-center" 
+                       />
                     </div>
                  </div>
 
@@ -116,10 +116,10 @@ export const AgentSelectionView: React.FC<Props> = ({ result, symbolUrl, onAgent
                     {/* ELEVEN LABS WIDGET CONTAINER */}
                     <div className="w-full max-w-sm">
                        {/* Note: In a real scenario, you'd dynamicall set agent-id based on selectedAgent */}
-                       <elevenlabs-convai 
+                       <ElevenLabsConvai 
                           agent-id={AGENT_CONFIGS[selectedAgent as keyof typeof AGENT_CONFIGS].elevenLabsId}
                           class="w-full"
-                       ></elevenlabs-convai>
+                       ></ElevenLabsConvai>
                        
                        {/* Fallback message if no ID is configured */}
                        {AGENT_CONFIGS[selectedAgent as keyof typeof AGENT_CONFIGS].elevenLabsId.includes('replace') && (
@@ -170,7 +170,8 @@ export const AgentSelectionView: React.FC<Props> = ({ result, symbolUrl, onAgent
                          <SmartImage 
                            src={symbolUrl} 
                            alt="Cosmic Fusion Symbol" 
-                           className="w-[125%] h-[125%] max-w-none object-cover transition-transform duration-[2s] ease-in-out group-hover:scale-[1.35] group-hover:rotate-3" 
+                           containerClassName="w-full h-full flex items-center justify-center"
+                           className="w-[125%] h-[125%] max-w-none object-cover object-center transition-transform duration-[2s] ease-in-out group-hover:scale-[1.35] group-hover:rotate-3" 
                            priority={true}
                          />
                     </div>
