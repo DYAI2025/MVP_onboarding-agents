@@ -1,5 +1,5 @@
 
-import { DEMO_MODE, REMOTE_ENGINE_URL, LOCAL_PROXY_URL } from '../src/config';
+import { DEMO_MODE, REMOTE_SYMBOL_ENDPOINT, LOCAL_PROXY_URL } from '../src/config';
 
 export interface SymbolConfig {
   influence: 'western' | 'balanced' | 'eastern';
@@ -85,7 +85,7 @@ export const generateSymbol = async (basePrompt: string, config?: SymbolConfig):
 
   // 1. Attempt Instant Remote Generation (BaziEngine v2)
   try {
-    console.log(`[SymbolService] Requesting instant symbol from ${REMOTE_ENGINE_URL}...`);
+    console.log(`[SymbolService] Requesting instant symbol from ${REMOTE_SYMBOL_ENDPOINT}...`);
 
     const payload = {
       prompt: basePrompt,
@@ -93,7 +93,7 @@ export const generateSymbol = async (basePrompt: string, config?: SymbolConfig):
       mode: config?.transparentBackground ? 'transparent' : 'cinematic'
     };
 
-    const response = await fetch(`${REMOTE_ENGINE_URL}/api/symbol`, {
+    const response = await fetch(REMOTE_SYMBOL_ENDPOINT, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
