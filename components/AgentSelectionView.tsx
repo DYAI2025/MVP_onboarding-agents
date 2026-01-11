@@ -2,35 +2,38 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { FusionResult } from '../types';
 import { SmartImage } from './SmartImage';
+import { getAgentConfig, isAgentConfigured } from '../services/elevenLabsAgents';
 
 // NOTE: Global JSX declaration removed to prevent IntrinsicElements conflict.
 // We handle the custom element via explicit cast below.
 
 interface Props {
-  result: FusionResult;
-  symbolUrl: string;
+  result: FusionResult | null;
+  symbolUrl: string | null;
   onAgentSelect: (agentId: string) => void;
 }
 
-// REPLACE THESE WITH YOUR ACTUAL ELEVEN LABS AGENT IDs
-const AGENT_CONFIGS = {
-  levi: {
-    id: 'levi',
-    name: 'Levi Bazi',
-    role: 'Quantum_BaZi_Protocols',
-    // Placeholder ID - User needs to create an agent in Eleven Labs and paste ID here
-    elevenLabsId: 'replace-with-levi-agent-id' 
-  },
-  victoria: {
-    id: 'victoria',
-    name: 'Victoria Celestia',
-    role: 'Celestial_Relationship_Module',
-    // Placeholder ID - User needs to create an agent in Eleven Labs and paste ID here
-    elevenLabsId: 'replace-with-victoria-agent-id'
-  }
-};
-
 export const AgentSelectionView: React.FC<Props> = ({ result, symbolUrl, onAgentSelect }) => {
+  // Fallback UI if essential data missing
+  if (!result || !symbolUrl) {
+    return (
+      <div className="min-h-screen bg-[#0F1014] flex items-center justify-center p-6">
+        <div className="text-center max-w-md">
+          <div className="text-6xl mb-6">&#x2728;</div>
+          <h2 className="font-serif text-3xl text-white mb-4">Daten werden geladen...</h2>
+          <p className="text-gray-400 mb-8 leading-relaxed">
+            Falls diese Ansicht bestehen bleibt, starte den Onboarding-Prozess bitte neu.
+          </p>
+          <button
+            onClick={() => window.location.href = '/'}
+            className="px-8 py-4 bg-gradient-to-r from-astro-gold to-[#B89628] text-white font-serif italic text-lg rounded-2xl shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all"
+          >
+            Zurück zum Start
+          </button>
+        </div>
+      </div>
+    );
+  }
   
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
   const [isChatActive, setIsChatActive] = useState(false);
@@ -98,9 +101,9 @@ export const AgentSelectionView: React.FC<Props> = ({ result, symbolUrl, onAgent
                     </div>
                  </div>
 
-                 <h3 className="font-serif text-3xl text-white mb-2">{AGENT_CONFIGS[selectedAgent as keyof typeof AGENT_CONFIGS].name}</h3>
+                 <h3 className="font-serif text-3xl text-white mb-2">{getAgentConfig(selectedAgent as 'levi' | 'victoria').name}</h3>
                  <p className="text-xs text-gray-500 uppercase tracking-widest font-bold mb-8">
-                   {AGENT_CONFIGS[selectedAgent as keyof typeof AGENT_CONFIGS].role}
+                   {getAgentConfig(selectedAgent as 'levi' | 'victoria').role}
                  </p>
 
                  <div className="text-center space-y-4">
@@ -117,12 +120,12 @@ export const AgentSelectionView: React.FC<Props> = ({ result, symbolUrl, onAgent
                     <div className="w-full max-w-sm">
                        {/* Note: In a real scenario, you'd dynamicall set agent-id based on selectedAgent */}
                        <ElevenLabsConvai 
-                          agent-id={AGENT_CONFIGS[selectedAgent as keyof typeof AGENT_CONFIGS].elevenLabsId}
+                          agent-id={getAgentConfig(selectedAgent as 'levi' | 'victoria').elevenLabsId}
                           class="w-full"
                        ></ElevenLabsConvai>
                        
                        {/* Fallback message if no ID is configured */}
-                       {AGENT_CONFIGS[selectedAgent as keyof typeof AGENT_CONFIGS].elevenLabsId.includes('replace') && (
+                       {!isAgentConfigured(selectedAgent as 'levi' | 'victoria') && (
                          <div className="mt-4 p-4 bg-red-900/20 border border-red-500/30 rounded-xl text-center">
                            <p className="text-xs text-red-400">Dev Note: Please configure valid Agent IDs in AgentSelectionView.tsx</p>
                          </div>
