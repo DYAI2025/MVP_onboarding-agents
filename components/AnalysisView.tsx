@@ -29,7 +29,7 @@ const SUN_SIGN_INSIGHTS: Record<string, string> = {
 
 export const AnalysisView: React.FC<Props> = ({ result, state, onGenerateImage, transits }) => {
   const { t } = useLanguage();
-  
+
   // Default config for background generation - Hidden from user
   const defaultConfig: SymbolConfig = {
     influence: 'balanced',
@@ -50,18 +50,18 @@ export const AnalysisView: React.FC<Props> = ({ result, state, onGenerateImage, 
       if (solarSigRef.current) {
         const rect = solarSigRef.current.getBoundingClientRect();
         const viewHeight = window.innerHeight;
-        
+
         if (rect.top < viewHeight && rect.bottom > 0) {
           const sensitivity = 0.15;
           const centerPoint = (rect.top + rect.height / 2) - (viewHeight / 2);
           setParallaxOffset(centerPoint * sensitivity);
-          
+
           const progress = (centerPoint / (viewHeight / 2));
           setScrollProgress(Math.min(Math.max(progress, -1), 1));
         }
       }
     };
-    
+
     // Auto-pulse animation loop
     let frameId: number;
     const animatePulse = () => {
@@ -74,7 +74,7 @@ export const AnalysisView: React.FC<Props> = ({ result, state, onGenerateImage, 
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
     animatePulse();
-    
+
     return () => {
       window.removeEventListener('scroll', handleScroll);
       cancelAnimationFrame(frameId);
@@ -96,7 +96,7 @@ export const AnalysisView: React.FC<Props> = ({ result, state, onGenerateImage, 
   const dynamicScale = (1 + (0.05 * (1 - Math.abs(scrollProgress)))) + (isHovering ? 0.02 : 0);
 
   // Dynamic Glow Calculation
-  const pulseFactor = 0.15 + (autoPulse * 0.2); 
+  const pulseFactor = 0.15 + (autoPulse * 0.2);
   const mouseDist = Math.sqrt(mousePos.x ** 2 + mousePos.y ** 2);
   const normalizedMouseDist = Math.min(mouseDist * 2, 1);
   const glowAlpha = (pulseFactor + Math.abs(scrollProgress) * 0.15 + (normalizedMouseDist * 0.4));
@@ -105,7 +105,7 @@ export const AnalysisView: React.FC<Props> = ({ result, state, onGenerateImage, 
 
   return (
     <div className="space-y-12 md:space-y-16 animate-fade-in w-full pb-20">
-      
+
       {/* Intro Header */}
       <div className="text-center space-y-4 px-4 mb-8">
         <div className="inline-block px-3 py-1 border border-green-200 bg-green-50 text-green-700 text-[10px] tracking-widest uppercase rounded-full dark:bg-green-900/30 dark:text-green-400 dark:border-green-800">
@@ -118,7 +118,7 @@ export const AnalysisView: React.FC<Props> = ({ result, state, onGenerateImage, 
       </div>
 
       <div className="bg-astro-card border border-astro-border rounded-[2rem] md:rounded-[3rem] p-6 md:p-14 shadow-elevated relative overflow-hidden transition-all duration-700 w-full">
-        
+
         {/* Synthesis Title */}
         <div className="text-center mb-10 md:mb-16 relative z-10 mt-6 md:mt-0">
           <span className="font-sans text-[10px] md:text-[11px] tracking-[0.4em] text-astro-gold uppercase mb-3 md:mb-4 block font-black">{t.analysis.synthesis_matrix}</span>
@@ -164,8 +164,8 @@ export const AnalysisView: React.FC<Props> = ({ result, state, onGenerateImage, 
         </div>
 
         {/* REFINED SOLAR SIGNATURE WITH DYNAMIC REACTIVE GLOW */}
-        <div 
-          ref={solarSigRef} 
+        <div
+          ref={solarSigRef}
           onMouseMove={handleMouseMove}
           onMouseEnter={() => setIsHovering(true)}
           onMouseLeave={() => {
@@ -177,70 +177,79 @@ export const AnalysisView: React.FC<Props> = ({ result, state, onGenerateImage, 
             ${isHovering ? 'border-astro-gold shadow-[0_45px_100px_rgba(212,175,55,0.25)]' : 'border-astro-border shadow-elevated'}
           `}
         >
-           {/* Primary Dynamic Gradient */}
-           <div 
-             className="absolute inset-0 pointer-events-none transition-all duration-1000 will-change-[background,opacity,filter]"
-             style={{
-               background: `linear-gradient(${glowHueShift}deg, rgba(212,175,55,${glowAlpha}) 0%, transparent 50%, rgba(245,243,255,${glowAlpha * 0.5}) 100%)`,
-               opacity: isHovering ? 1 : 0.8,
-               filter: `blur(${blurAmount}px)`
-             }}
-           ></div>
+          {/* Primary Dynamic Gradient */}
+          <div
+            className="absolute inset-0 pointer-events-none transition-all duration-1000 will-change-[background,opacity,filter]"
+            style={{
+              background: `linear-gradient(${glowHueShift}deg, rgba(212,175,55,${glowAlpha}) 0%, transparent 50%, rgba(245,243,255,${glowAlpha * 0.5}) 100%)`,
+              opacity: isHovering ? 1 : 0.8,
+              filter: `blur(${blurAmount}px)`
+            }}
+          ></div>
 
-           <div 
-             className="relative z-10 p-6 md:p-16 will-change-transform transition-all duration-500 ease-out flex flex-col items-center max-w-5xl"
-             style={{ 
-               transform: `translateY(${parallaxOffset * 1.5}px) scale(${dynamicScale}) rotateX(${normalizedRotation}deg) rotateY(${normalizedRotationY}deg)` 
-             }}
-           >
-              <div className="inline-flex items-center gap-4 mb-8 md:mb-12">
-                <span className={`w-1.5 h-1.5 rounded-full bg-astro-gold transition-all duration-500 animate-pulse-soft ${isHovering ? 'scale-150 shadow-[0_0_12px_#D4AF37]' : ''}`}></span>
-                <span className="font-serif text-sm md:text-xl italic tracking-[0.2em] text-astro-gold font-medium transition-all duration-700 group-hover:tracking-[0.3em]">
-                  {t.analysis.solar_signature}: {result.western.sunSign}
-                </span>
-                <span className={`w-1.5 h-1.5 rounded-full bg-astro-gold transition-all duration-500 animate-pulse-soft ${isHovering ? 'scale-150 shadow-[0_0_12px_#D4AF37]' : ''}`} style={{ animationDelay: '1.5s' }}></span>
-              </div>
-              
-              <div className="relative group/text cursor-default px-4">
-                <p className="font-sans font-light text-astro-text text-3xl md:text-7xl leading-tight opacity-95 mx-auto drop-shadow-xl select-none transition-all duration-700 group-hover/text:scale-[1.02] group-hover/text:text-astro-gold tracking-tight">
-                  "{sunInsight}"
-                </p>
-              </div>
-              
-              <div 
-                className={`mt-12 h-1 transition-all duration-1000 bg-gradient-to-r from-transparent via-astro-gold/40 to-transparent`}
-                style={{
-                  width: isHovering ? '16rem' : '6rem',
-                  opacity: 0.5 + autoPulse * 0.5
-                }}
-              ></div>
-           </div>
+          <div
+            className="relative z-10 p-6 md:p-16 will-change-transform transition-all duration-500 ease-out flex flex-col items-center max-w-5xl"
+            style={{
+              transform: `translateY(${parallaxOffset * 1.5}px) scale(${dynamicScale}) rotateX(${normalizedRotation}deg) rotateY(${normalizedRotationY}deg)`
+            }}
+          >
+            <div className="inline-flex items-center gap-4 mb-8 md:mb-12">
+              <span className={`w-1.5 h-1.5 rounded-full bg-astro-gold transition-all duration-500 animate-pulse-soft ${isHovering ? 'scale-150 shadow-[0_0_12px_#D4AF37]' : ''}`}></span>
+              <span className="font-serif text-sm md:text-xl italic tracking-[0.2em] text-astro-gold font-medium transition-all duration-700 group-hover:tracking-[0.3em]">
+                {t.analysis.solar_signature}: {result.western.sunSign}
+              </span>
+              <span className={`w-1.5 h-1.5 rounded-full bg-astro-gold transition-all duration-500 animate-pulse-soft ${isHovering ? 'scale-150 shadow-[0_0_12px_#D4AF37]' : ''}`} style={{ animationDelay: '1.5s' }}></span>
+            </div>
+
+            <div className="relative group/text cursor-default px-4">
+              <p className="font-sans font-light text-astro-text text-3xl md:text-7xl leading-tight opacity-95 mx-auto drop-shadow-xl select-none transition-all duration-700 group-hover/text:scale-[1.02] group-hover/text:text-astro-gold tracking-tight">
+                "{sunInsight}"
+              </p>
+            </div>
+
+            <div
+              className={`mt-12 h-1 transition-all duration-1000 bg-gradient-to-r from-transparent via-astro-gold/40 to-transparent`}
+              style={{
+                width: isHovering ? '16rem' : '6rem',
+                opacity: 0.5 + autoPulse * 0.5
+              }}
+            ></div>
+          </div>
         </div>
 
         {/* --- ONE ACTION BUTTON SECTION --- */}
         <div className="mt-12 md:mt-20 text-center">
-           <button 
-             onClick={() => onGenerateImage(defaultConfig)}
-             disabled={state === CalculationState.GENERATING_IMAGE || state === CalculationState.FINISHED}
-             className="w-full md:w-auto px-12 py-6 md:px-20 md:py-8 bg-astro-text text-white font-serif italic text-2xl md:text-3xl rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] hover:shadow-[0_30px_60px_rgba(212,175,55,0.2)] hover:bg-black hover:scale-[1.02] transition-all duration-500 disabled:opacity-50 relative overflow-hidden group"
-           >
-             <span className="relative z-10 flex items-center justify-center gap-3">
-               {state === CalculationState.GENERATING_IMAGE ? (
-                 <>
-                   <span className="animate-spin text-astro-gold">✧</span> 
-                   {t.analysis.btn_generating}
-                 </>
-               ) : (
-                 <>
-                   {t.analysis.btn_generate} <span className="text-astro-gold">→</span>
-                 </>
-               )}
-             </span>
-             <div className="absolute inset-0 bg-gradient-to-r from-astro-gold/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-           </button>
-           <p className="mt-4 text-xs text-astro-subtext uppercase tracking-widest font-bold opacity-60">
-             Startet die KI-Symbolgenerierung & Agenten-Uplink
-           </p>
+          <button
+            onClick={() => onGenerateImage(defaultConfig)}
+            disabled={state === CalculationState.GENERATING_IMAGE || state === CalculationState.FINISHED}
+            className="w-full md:w-auto px-12 py-6 md:px-20 md:py-8 bg-astro-text text-white font-serif italic text-2xl md:text-3xl rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] hover:shadow-[0_30px_60px_rgba(212,175,55,0.2)] hover:bg-black hover:scale-[1.02] transition-all duration-500 disabled:opacity-50 relative overflow-hidden group"
+          >
+            <span className="relative z-10 flex items-center justify-center gap-3">
+              {state === CalculationState.GENERATING_IMAGE ? (
+                <>
+                  <span className="animate-spin text-astro-gold">✧</span>
+                  {t.analysis.btn_generating}
+                </>
+              ) : (
+                <>
+                  {t.analysis.btn_generate} <span className="text-astro-gold">→</span>
+                </>
+              )}
+            </span>
+            <div className="absolute inset-0 bg-gradient-to-r from-astro-gold/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+          </button>
+          <p className="mt-4 text-xs text-astro-subtext uppercase tracking-widest font-bold opacity-60">
+            Startet die KI-Symbolgenerierung & Agenten-Uplink
+          </p>
+        </div>
+
+        {/* Status Indicator */}
+        <div className="mt-6 flex justify-center">
+          {state === CalculationState.GENERATING_IMAGE && (
+            <span className="inline-block px-4 py-1 text-[10px] text-astro-gold/80 bg-astro-gold/5 rounded-full animate-pulse border border-astro-gold/10">
+              Initializing Quantum Matrix...
+            </span>
+          )}
         </div>
       </div>
     </div>

@@ -7,9 +7,10 @@ interface Props {
   onNavigate: (view: 'dashboard' | 'quizzes' | 'character_dashboard' | 'agent_selection' | 'matrix') => void;
   isDarkMode: boolean;
   onToggleTheme: () => void;
+  onReset?: () => void; // Added onReset prop
 }
 
-export const Sidebar: React.FC<Props> = ({ currentView, onNavigate, isDarkMode, onToggleTheme }) => {
+export const Sidebar: React.FC<Props> = ({ currentView, onNavigate, isDarkMode, onToggleTheme, onReset }) => {
   const { language, toggleLanguage, t } = useLanguage();
 
   const menuItems = [
@@ -34,25 +35,24 @@ export const Sidebar: React.FC<Props> = ({ currentView, onNavigate, isDarkMode, 
         <span className="md:hidden">A</span>
         <div className="h-0.5 w-0 bg-astro-gold transition-all duration-700 group-hover:w-full"></div>
       </div>
-      
+
       <div className="flex flex-col gap-6 w-full">
         {menuItems.map((item) => {
           // Map internal ID to view state for active check
-          const isActive = 
+          const isActive =
             (item.id === 'dashboard' && currentView === 'dashboard') ||
             (item.id === 'quizzes' && currentView === 'quizzes') ||
             (item.id === 'profile' && currentView === 'character_dashboard') ||
             (item.id === 'agents' && currentView === 'agent_selection');
 
           return (
-            <div 
+            <div
               key={item.id}
               onClick={() => handleNavigation(item.id)}
-              className={`flex items-center gap-5 cursor-pointer p-3.5 rounded-2xl transition-all duration-500 group relative ${
-                isActive 
-                  ? 'bg-astro-bg text-astro-gold shadow-ambient' 
+              className={`flex items-center gap-5 cursor-pointer p-3.5 rounded-2xl transition-all duration-500 group relative ${isActive
+                  ? 'bg-astro-bg text-astro-gold shadow-ambient'
                   : 'text-astro-subtext hover:text-astro-text hover:bg-astro-bg/40'
-              }`}
+                }`}
             >
               <span className={`text-xl transition-transform duration-500 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`}>{item.icon}</span>
               <span className="hidden md:inline font-sans text-[10px] tracking-[0.2em] uppercase font-bold">{item.label}</span>
@@ -65,16 +65,29 @@ export const Sidebar: React.FC<Props> = ({ currentView, onNavigate, isDarkMode, 
       </div>
 
       <div className="mt-auto space-y-4 w-full pt-10 border-t border-astro-border/50">
-        <div 
+
+        {/* Reset Action - Only visible if permitted */}
+        {onReset && (
+          <div
+            onClick={onReset}
+            className="flex items-center gap-5 p-3.5 cursor-pointer transition-colors group rounded-2xl text-red-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 mb-2"
+            title="Reset Demo State"
+          >
+            <span className="text-xl group-hover:rotate-180 transition-transform duration-700">↺</span>
+            <span className="hidden md:inline font-sans text-[10px] tracking-[0.2em] uppercase font-bold">Restart</span>
+          </div>
+        )}
+
+        <div
           onClick={() => onNavigate('matrix')}
           className={`flex items-center gap-5 p-3.5 cursor-pointer transition-colors group rounded-2xl ${currentView === 'matrix' ? 'bg-astro-bg text-astro-gold' : 'text-astro-subtext hover:text-astro-text'}`}
         >
           <span className="text-xl group-hover:rotate-90 transition-transform duration-700">⚙</span>
           <span className="hidden md:inline font-sans text-[10px] tracking-[0.2em] uppercase font-bold">{t.sidebar.matrix}</span>
         </div>
-        
+
         {/* Language Toggle */}
-        <div 
+        <div
           onClick={toggleLanguage}
           className="flex items-center gap-5 text-astro-subtext p-3.5 cursor-pointer hover:text-astro-gold transition-all duration-500 group bg-astro-bg/30 rounded-2xl"
         >
@@ -85,7 +98,7 @@ export const Sidebar: React.FC<Props> = ({ currentView, onNavigate, isDarkMode, 
         </div>
 
         {/* Theme Toggle */}
-        <div 
+        <div
           onClick={onToggleTheme}
           className="flex items-center gap-5 text-astro-subtext p-3.5 cursor-pointer hover:text-astro-gold transition-all duration-500 group bg-astro-bg/30 rounded-2xl"
         >
