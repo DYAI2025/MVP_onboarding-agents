@@ -9,7 +9,7 @@
     "dev:server": "tsx server/server.ts",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest"
+    "test": "bash -c 'source scripts/ensure-swisseph.sh && vitest'"
   },
   "dependencies": {
     "@google/genai": "^1.34.0",
