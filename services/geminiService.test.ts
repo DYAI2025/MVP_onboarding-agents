@@ -7,7 +7,7 @@ global.fetch = vi.fn();
 // Mock config to control DEMO_MODE dynamically
 vi.mock('../src/config', () => ({
     DEMO_MODE: false, // Default for these tests
-    REMOTE_ENGINE_URL: 'https://test',
+    REMOTE_SYMBOL_ENDPOINT: 'https://test/api/symbol',
     LOCAL_PROXY_URL: '/test'
 }));
 
