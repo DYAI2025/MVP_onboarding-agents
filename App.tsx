@@ -217,7 +217,7 @@ function AppContent() {
     setCurrentView('character_dashboard');
   };
 
-  if (currentView === 'agent_selection' && analysisResult && generatedImage) {
+  if (currentView === 'agent_selection') {
     return (
       <AgentSelectionView
         result={analysisResult}
