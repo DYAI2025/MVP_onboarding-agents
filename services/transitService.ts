@@ -1,7 +1,6 @@
 
 import { Transit } from '../types';
-
-const REMOTE_API_BASE = 'https://baziengine-v2.fly.dev';
+import { REMOTE_TRANSITS_ENDPOINT } from '../src/config';
 
 const ZODIAC_SIGNS = [
   "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
@@ -112,12 +111,12 @@ export const fetchTransitsForDate = async (date: Date): Promise<Transit[]> => {
 
   // 1. Attempt Remote Fetch
   try {
-    console.group(`[TransitService] Remote Sync Test: ${REMOTE_API_BASE}`);
+    console.group(`[TransitService] Remote Sync Test: ${REMOTE_TRANSITS_ENDPOINT}`);
     console.log(`Target Date: ${date.toISOString()}`);
     
     // We try to fetch from a likely endpoint for astrological bodies
     // Adjust endpoint as necessary if API docs become available (e.g., /api/bodies, /api/ephemeris)
-    const response = await fetch(`${REMOTE_API_BASE}/api/transits?date=${date.toISOString()}`, {
+    const response = await fetch(`${REMOTE_TRANSITS_ENDPOINT}?date=${date.toISOString()}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
     });

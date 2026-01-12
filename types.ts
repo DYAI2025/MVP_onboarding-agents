@@ -3,6 +3,8 @@ export interface BirthData {
   date: string;
   time: string;
   location: string;
+  lat?: number;
+  long?: number;
 }
 
 export interface WesternAnalysis {
