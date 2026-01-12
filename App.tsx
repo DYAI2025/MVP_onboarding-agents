@@ -234,9 +234,7 @@ function AppContent() {
         result={analysisResult}
         symbolUrl={generatedImage}
         onAgentSelect={handleAgentSelect}
-        onBackToDashboard={handleBackToDashboard}
-        isChatActive={isChatActive}
-        onChatActiveChange={setIsChatActive}
+        onBackToDashboard={() => setCurrentView('dashboard')}
       />
     );
   }
