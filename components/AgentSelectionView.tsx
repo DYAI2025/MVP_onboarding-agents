@@ -123,7 +123,7 @@ export const AgentSelectionView: React.FC<Props> = ({ result, symbolUrl, onAgent
                          dangerouslySetInnerHTML={{
                            __html: `<elevenlabs-convai agent-id="${getAgentConfig(selectedAgent as 'levi' | 'victoria').elevenLabsId}"></elevenlabs-convai>`
                          }}
-                         className="w-full"
+                         className="w-full h-full min-h-[400px]"
                        />
                        
                        {/* Fallback message if no ID is configured */}
