@@ -63,6 +63,7 @@ function AppContent() {
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
   const [generationStats, setGenerationStats] = useState<GenerationStats | null>(null);
+  const [isChatActive, setIsChatActive] = useState(false);
 
   const [transits, setTransits] = useState<Transit[]>([]);
   const [loadingTransits, setLoadingTransits] = useState(false);
@@ -89,6 +90,7 @@ function AppContent() {
         setCurrentView('character_dashboard');
       } else if (savedState.generatedImage) {
         setCurrentView('agent_selection');
+        setIsChatActive(false);
       } else if (savedState.analysisResult) {
         setCurrentView('dashboard');
         // If we have analysis but no image, in force mode we might want to auto-trigger? 
@@ -116,6 +118,7 @@ function AppContent() {
     setSelectedAgent(null);
     setAstroState(CalculationState.IDLE);
     setGenerationStats(null);
+    setIsChatActive(false);
     setCurrentView('dashboard');
     window.location.reload(); // Hard reset
   };
@@ -155,6 +158,7 @@ function AppContent() {
       // Increased delay to 2.0s to allow user to see "Visual Confirmation" state
       setTimeout(() => {
         setCurrentView('agent_selection');
+        setIsChatActive(false);
       }, 2000);
 
     } catch (error) {
@@ -166,6 +170,7 @@ function AppContent() {
       if (FORCE_HAPPY_PATH) {
         // Should theoretically not happen with new geminiService
         setCurrentView('agent_selection');
+        setIsChatActive(false);
       }
     }
   };
@@ -214,7 +219,13 @@ function AppContent() {
 
   const handleAgentSelect = (agentId: string) => {
     setSelectedAgent(agentId);
+    setIsChatActive(false);
     setCurrentView('character_dashboard');
+  };
+
+  const handleBackToDashboard = () => {
+    setIsChatActive(false);
+    setCurrentView('dashboard');
   };
 
   if (currentView === 'agent_selection') {

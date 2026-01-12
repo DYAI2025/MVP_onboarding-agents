@@ -37,7 +37,6 @@ export const AgentSelectionView: React.FC<Props> = ({ result, symbolUrl, onAgent
   }
   
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
-  const [isChatActive, setIsChatActive] = useState(false);
   const gongRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -61,11 +60,12 @@ export const AgentSelectionView: React.FC<Props> = ({ result, symbolUrl, onAgent
     
     // 2. Open Chat Interface
     setSelectedAgent(agentId);
-    setIsChatActive(true);
+    onChatActiveChange(true);
   };
 
   const handleProceedToDashboard = () => {
     if (selectedAgent) {
+      onChatActiveChange(false);
       onAgentSelect(selectedAgent);
     }
   };
