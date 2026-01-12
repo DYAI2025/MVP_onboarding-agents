@@ -12,6 +12,7 @@ export const BAZI_ENGINE_BASE_URL = import.meta.env.VITE_BAZI_ENGINE_URL || 'htt
 
 // Derived endpoints (constructed from base - prevents double /api/ paths)
 export const REMOTE_SYMBOL_ENDPOINT = `${BAZI_ENGINE_BASE_URL}/api/symbol`;
+export const REMOTE_ANALYSIS_ENDPOINT = `${BAZI_ENGINE_BASE_URL}/api/analysis`;
 export const REMOTE_TRANSITS_ENDPOINT = `${BAZI_ENGINE_BASE_URL}/api/transits`;
 
 // Local proxy (for Gemini via Express backend)

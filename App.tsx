@@ -152,10 +152,10 @@ function AppContent() {
       setAstroState(CalculationState.FINISHED);
 
       // Auto-navigate to Agent Selection
-      // Add small delay for user to see "Finished" state if needed
+      // Increased delay to 2.0s to allow user to see "Visual Confirmation" state
       setTimeout(() => {
         setCurrentView('agent_selection');
-      }, 800);
+      }, 2000);
 
     } catch (error) {
       console.error("Critical generation error", error);

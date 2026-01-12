@@ -245,9 +245,9 @@ export const AnalysisView: React.FC<Props> = ({ result, state, onGenerateImage, 
 
         {/* Status Indicator */}
         <div className="mt-6 flex justify-center">
-          {state === CalculationState.GENERATING_IMAGE && (
-            <span className="inline-block px-4 py-1 text-[10px] text-astro-gold/80 bg-astro-gold/5 rounded-full animate-pulse border border-astro-gold/10">
-              Initializing Quantum Matrix...
+          {state === CalculationState.FINISHED && (
+            <span className="inline-block px-4 py-1 text-[10px] text-green-400 bg-green-900/20 rounded-full border border-green-500/30 animate-fade-in">
+              ✨ Symbol Captured. Uplink Establishing...
             </span>
           )}
         </div>

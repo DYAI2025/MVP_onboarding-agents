@@ -290,9 +290,62 @@ const calculateLocalAnalysis = (dateObj: Date): { western: WesternAnalysis, east
   };
 };
 
+import { REMOTE_ANALYSIS_ENDPOINT } from '../src/config';
+
+// ... (previous imports and local logic remain unchanged until runFusionAnalysis)
+
+// --- Remote Analysis Logic ---
+
+const fetchRemoteAnalysis = async (data: BirthData): Promise<FusionResult | null> => {
+  try {
+    const payload = {
+      date: data.date,
+      time: data.time,
+      lat: data.lat,
+      lng: data.long, // Note: type uses 'long', API might expect 'lng' or 'long'
+      location: data.location
+    };
+    
+    console.log(`[AstroPhysics] Requesting remote analysis from ${REMOTE_ANALYSIS_ENDPOINT}...`, payload);
+
+    const response = await fetch(REMOTE_ANALYSIS_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(8000) // 8s timeout
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      console.log("✅ Remote analysis received:", result);
+      // Validate structure (basic check)
+      if (result.synthesisTitle && result.western && result.eastern) {
+        return result as FusionResult;
+      }
+    } else {
+      console.warn(`⚠️ Remote analysis returned ${response.status}. Falling back to local.`);
+    }
+  } catch (error) {
+    console.warn("❌ Remote analysis failed or timed out.", error);
+  }
+  return null;
+};
+
 export const runFusionAnalysis = async (data: BirthData): Promise<FusionResult> => {
   const dateObj = new Date(data.date + 'T' + data.time);
   
+  // 1. Try Remote Analysis first
+  const remoteResult = await fetchRemoteAnalysis(data);
+  if (remoteResult) {
+    return remoteResult;
+  }
+
+  // 2. Fallback to Local Calculation
+  console.log("Using local fusion engine fallback.");
+
   let western: WesternAnalysis;
   let eastern: EasternAnalysis;
 
