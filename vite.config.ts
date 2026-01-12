@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react';
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
   return {
-    base: '/MVP_onboarding-agents/',
+    base: './', // Use relative paths for assets (Works for GH Pages & Local)
     server: {
       port: 3000,
       host: '0.0.0.0',
