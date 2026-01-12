@@ -117,12 +117,14 @@ export const AgentSelectionView: React.FC<Props> = ({ result, symbolUrl, onAgent
               <div className="w-full md:w-1/2 relative bg-[#0B0C10] flex flex-col">
                  <div className="flex-1 flex items-center justify-center p-8">
                     {/* ELEVEN LABS WIDGET CONTAINER */}
-                    <div className="w-full max-w-sm">
-                       {/* Note: In a real scenario, you'd dynamicall set agent-id based on selectedAgent */}
-                       <ElevenLabsConvai 
-                          agent-id={getAgentConfig(selectedAgent as 'levi' | 'victoria').elevenLabsId}
-                          class="w-full"
-                       ></ElevenLabsConvai>
+                    <div className="w-full max-w-sm min-h-[400px] flex flex-col items-center justify-center">
+                       {/* Render widget via dangerouslySetInnerHTML to ensure proper custom element rendering */}
+                       <div
+                         dangerouslySetInnerHTML={{
+                           __html: `<elevenlabs-convai agent-id="${getAgentConfig(selectedAgent as 'levi' | 'victoria').elevenLabsId}"></elevenlabs-convai>`
+                         }}
+                         className="w-full"
+                       />
                        
                        {/* Fallback message if no ID is configured */}
                        {!isAgentConfigured(selectedAgent as 'levi' | 'victoria') && (
