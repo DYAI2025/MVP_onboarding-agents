@@ -11,9 +11,10 @@ interface Props {
   result: FusionResult | null;
   symbolUrl: string | null;
   onAgentSelect: (agentId: string) => void;
+  onBackToDashboard: () => void;
 }
 
-export const AgentSelectionView: React.FC<Props> = ({ result, symbolUrl, onAgentSelect }) => {
+export const AgentSelectionView: React.FC<Props> = ({ result, symbolUrl, onAgentSelect, onBackToDashboard }) => {
   // Fallback UI if essential data missing
   if (!result || !symbolUrl) {
     return (
@@ -154,7 +155,17 @@ export const AgentSelectionView: React.FC<Props> = ({ result, symbolUrl, onAgent
         
         {/* Navigation / Meta */}
         <div className="flex justify-between items-center mb-16">
-            <div className="text-[10px] uppercase tracking-[0.4em] text-slate-500 font-black">System v.7.0</div>
+            <div className="flex items-center gap-4">
+                <button
+                  type="button"
+                  onClick={onBackToDashboard}
+                  disabled={isChatActive}
+                  className="text-[10px] uppercase tracking-[0.3em] text-slate-300 font-black border border-white/10 px-4 py-2 rounded-full hover:border-astro-gold/60 hover:text-astro-gold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  ← Zurück zur Analyse
+                </button>
+                <div className="text-[10px] uppercase tracking-[0.4em] text-slate-500 font-black">System v.7.0</div>
+            </div>
             <div className="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-full border border-white/5 backdrop-blur-sm">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(52,211,153,0.5)]"></span>
                 <span className="text-[10px] uppercase tracking-widest text-emerald-500 font-bold">Uplink Established</span>
