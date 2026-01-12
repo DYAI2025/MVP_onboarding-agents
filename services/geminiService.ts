@@ -113,6 +113,7 @@ export const generateSymbol = async (basePrompt: string, config?: SymbolConfig):
           durationMs: Date.now() - startTime
         };
       }
+      console.warn("⚠️ Remote engine response missing imageUrl. Falling back to Proxy.", data);
     } else {
       console.warn(`⚠️ Remote engine returned ${response.status}. Switching to local Proxy.`);
     }
@@ -146,8 +147,8 @@ export const generateSymbol = async (basePrompt: string, config?: SymbolConfig):
           durationMs: Date.now() - startTime
         };
       }
+      console.warn("⚠️ Proxy response missing imageDataUrl. Switching to local SVG.", data);
     } else {
-      const errText = await response.text();
       console.warn(`⚠️ Proxy returned ${response.status}. Switching to local SVG.`);
     }
 
