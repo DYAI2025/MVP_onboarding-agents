@@ -223,6 +223,7 @@ function AppContent() {
         result={analysisResult}
         symbolUrl={generatedImage}
         onAgentSelect={handleAgentSelect}
+        onBackToDashboard={() => setCurrentView('dashboard')}
       />
     );
   }

@@ -105,10 +105,11 @@ export const generateSymbol = async (basePrompt: string, config?: SymbolConfig):
 
     if (response.ok) {
       const data = await response.json();
-      if (data.imageUrl) {
+      const imageUrl = data.imageUrl || data.imageDataUrl;
+      if (imageUrl) {
         console.log("✅ Instant symbol received from remote engine.");
         return {
-          imageUrl: data.imageUrl,
+          imageUrl,
           engineUsed: 'remote',
           durationMs: Date.now() - startTime
         };
