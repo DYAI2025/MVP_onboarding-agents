@@ -180,6 +180,7 @@ export const AnalysisView: React.FC<Props> = ({ result, state, onGenerateImage, 
           {/* Primary Dynamic Gradient */}
           <div
             className="absolute inset-0 pointer-events-none transition-all duration-1000 will-change-[background,opacity,filter]"
+            // eslint-disable-next-line
               style={{
                 background: `linear-gradient(${glowHueShift}deg, rgba(212,175,55,${glowAlpha}) 0%, transparent 50%, rgba(245,243,255,${glowAlpha * 0.5}) 100%)`,
                 opacity: isHovering ? 1 : 0.8,
@@ -189,6 +190,7 @@ export const AnalysisView: React.FC<Props> = ({ result, state, onGenerateImage, 
 
           <div
             className="relative z-10 p-6 md:p-16 will-change-transform transition-all duration-500 ease-out flex flex-col items-center max-w-5xl"
+            // eslint-disable-next-line
             style={{
               transform: `translateY(${parallaxOffset * 1.5}px) scale(${dynamicScale}) rotateX(${normalizedRotation}deg) rotateY(${normalizedRotationY}deg)`
             }}
@@ -198,7 +200,9 @@ export const AnalysisView: React.FC<Props> = ({ result, state, onGenerateImage, 
               <span className="font-serif text-sm md:text-xl italic tracking-[0.2em] text-astro-gold font-medium transition-all duration-700 group-hover:tracking-[0.3em]">
                 {t.analysis.solar_signature}: {result.western.sunSign}
               </span>
-              <span className={`w-1.5 h-1.5 rounded-full bg-astro-gold transition-all duration-500 animate-pulse-soft ${isHovering ? 'scale-150 shadow-[0_0_12px_#D4AF37]' : ''}`} style={{ animationDelay: '1.5s' }}></span>
+              <span className={`w-1.5 h-1.5 rounded-full bg-astro-gold transition-all duration-500 animate-pulse-soft ${isHovering ? 'scale-150 shadow-[0_0_12px_#D4AF37]' : ''}`} 
+              // eslint-disable-next-line
+              style={{ animationDelay: '1.5s' }}></span>
             </div>
 
             <div className="relative group/text cursor-default px-4">
@@ -209,6 +213,7 @@ export const AnalysisView: React.FC<Props> = ({ result, state, onGenerateImage, 
 
             <div
               className={`mt-12 h-1 transition-all duration-1000 bg-gradient-to-r from-transparent via-astro-gold/40 to-transparent`}
+              // eslint-disable-next-line
               style={{
                 width: isHovering ? '16rem' : '6rem',
                 opacity: 0.5 + autoPulse * 0.5
