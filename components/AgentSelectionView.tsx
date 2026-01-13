@@ -261,7 +261,7 @@ export const AgentSelectionView: React.FC<Props> = ({ result, symbolUrl, onAgent
                        <span className="text-[9px] uppercase tracking-[0.3em] font-black text-[#3e2718]">Quantum_BaZi_Protocols</span>
                        <div className="w-2 h-2 rounded-full bg-[#3e2718] shadow-inner"></div>
                     </div>
-                    <h2 className="font-serif text-5xl mb-4 text-[#2a1b0e] font-bold" style={{ textShadow: 'inset 1px 1px 2px rgba(0,0,0,0.5)' }}>
+                    <h2 className="font-serif text-5xl mb-4 text-[#2a1b0e] font-bold [text-shadow:1px_1px_2px_rgba(0,0,0,0.5)]">
                         Levi Bazi
                     </h2>
                     <div className="flex gap-2 mb-8">
@@ -299,7 +299,7 @@ export const AgentSelectionView: React.FC<Props> = ({ result, symbolUrl, onAgent
                        <span className="text-[9px] uppercase tracking-[0.3em] font-black text-[#3e2718]">Celestial_Relationship_Module</span>
                        <div className="w-2 h-2 rounded-full bg-[#3e2718] shadow-inner"></div>
                     </div>
-                    <h2 className="font-serif text-5xl mb-4 text-[#2a1b0e] font-bold" style={{ textShadow: 'inset 1px 1px 2px rgba(0,0,0,0.5)' }}>
+                    <h2 className="font-serif text-5xl mb-4 text-[#2a1b0e] font-bold [text-shadow:1px_1px_2px_rgba(0,0,0,0.5)]">
                         Victoria Celestia
                     </h2>
                     <div className="flex gap-2 mb-8 flex-wrap">
