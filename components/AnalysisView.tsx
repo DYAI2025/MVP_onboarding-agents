@@ -180,11 +180,11 @@ export const AnalysisView: React.FC<Props> = ({ result, state, onGenerateImage, 
           {/* Primary Dynamic Gradient */}
           <div
             className="absolute inset-0 pointer-events-none transition-all duration-1000 will-change-[background,opacity,filter]"
-            style={{
-              background: `linear-gradient(${glowHueShift}deg, rgba(212,175,55,${glowAlpha}) 0%, transparent 50%, rgba(245,243,255,${glowAlpha * 0.5}) 100%)`,
-              opacity: isHovering ? 1 : 0.8,
-              filter: `blur(${blurAmount}px)`
-            }}
+              style={{
+                background: `linear-gradient(${glowHueShift}deg, rgba(212,175,55,${glowAlpha}) 0%, transparent 50%, rgba(245,243,255,${glowAlpha * 0.5}) 100%)`,
+                opacity: isHovering ? 1 : 0.8,
+                filter: `blur(${blurAmount}px)`
+              }}
           ></div>
 
           <div
