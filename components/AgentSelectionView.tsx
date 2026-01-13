@@ -39,10 +39,38 @@ export const AgentSelectionView: React.FC<Props> = ({ result, symbolUrl, onAgent
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
   const [isChatActive, setIsChatActive] = useState(false);
   const gongRef = useRef<HTMLAudioElement | null>(null);
+  const widgetContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     gongRef.current = new Audio('https://cdn.freesound.org/previews/26/26777_189914-lq.mp3');
   }, []);
+
+  // Effect to properly initialize the ElevenLabs widget when agent is selected
+  useEffect(() => {
+    if (!selectedAgent || !widgetContainerRef.current) return;
+
+    const agentConfig = getAgentConfig(selectedAgent as 'levi' | 'victoria');
+    const container = widgetContainerRef.current;
+
+    // Clear previous widget if any
+    container.innerHTML = '';
+
+    // Create the custom element
+    const widget = document.createElement('elevenlabs-convai');
+    widget.setAttribute('agent-id', agentConfig.elevenLabsId);
+
+    // Append to container
+    container.appendChild(widget);
+
+    console.log('[ElevenLabs Widget] Initialized with agent ID:', agentConfig.elevenLabsId);
+
+    // Cleanup function
+    return () => {
+      if (container) {
+        container.innerHTML = '';
+      }
+    };
+  }, [selectedAgent]);
 
   const handleSelection = (agentId: string) => {
     // 1. Play Gong
@@ -69,9 +97,6 @@ export const AgentSelectionView: React.FC<Props> = ({ result, symbolUrl, onAgent
       onAgentSelect(selectedAgent);
     }
   };
-
-  // Cast custom element to any to avoid TypeScript errors without polluting global namespace
-  const ElevenLabsConvai = 'elevenlabs-convai' as any;
 
   return (
     <div className="min-h-screen bg-[#0F1014] text-gray-300 font-sans p-6 md:p-12 relative overflow-hidden animate-fade-in">
@@ -119,18 +144,16 @@ export const AgentSelectionView: React.FC<Props> = ({ result, symbolUrl, onAgent
                  <div className="flex-1 flex items-center justify-center p-8">
                     {/* ELEVEN LABS WIDGET CONTAINER */}
                     <div className="w-full max-w-sm min-h-[400px] flex flex-col items-center justify-center">
-                       {/* Render widget via dangerouslySetInnerHTML to ensure proper custom element rendering */}
+                       {/* Widget will be dynamically inserted here via ref */}
                        <div
-                         dangerouslySetInnerHTML={{
-                           __html: `<elevenlabs-convai agent-id="${getAgentConfig(selectedAgent as 'levi' | 'victoria').elevenLabsId}"></elevenlabs-convai>`
-                         }}
-                         className="w-full h-full min-h-[400px]"
+                         ref={widgetContainerRef}
+                         className="w-full h-full min-h-[400px] flex items-center justify-center"
                        />
-                       
+
                        {/* Fallback message if no ID is configured */}
-                       {!isAgentConfigured(selectedAgent as 'levi' | 'victoria') && (
+                       {selectedAgent && !isAgentConfigured(selectedAgent as 'levi' | 'victoria') && (
                          <div className="mt-4 p-4 bg-red-900/20 border border-red-500/30 rounded-xl text-center">
-                           <p className="text-xs text-red-400">Dev Note: Please configure valid Agent IDs in AgentSelectionView.tsx</p>
+                           <p className="text-xs text-red-400">Dev Note: Please configure valid Agent IDs in .env file</p>
                          </div>
                        )}
                     </div>
