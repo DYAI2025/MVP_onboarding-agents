@@ -1,11 +1,25 @@
 // services/config.test.ts
 import { describe, it, expect } from 'vitest';
 import {
+  DEMO_MODE,
+  FORCE_HAPPY_PATH,
   BAZI_ENGINE_BASE_URL,
   REMOTE_SYMBOL_ENDPOINT,
   REMOTE_TRANSITS_ENDPOINT,
   LOCAL_PROXY_URL
 } from '../src/config';
+
+describe('config defaults (production-first)', () => {
+  it('DEMO_MODE defaults to false', () => {
+    // Production-first: no silent fallbacks unless explicitly enabled
+    expect(DEMO_MODE).toBe(false);
+  });
+
+  it('FORCE_HAPPY_PATH defaults to false', () => {
+    // Production-first: errors must surface, not be swallowed
+    expect(FORCE_HAPPY_PATH).toBe(false);
+  });
+});
 
 describe('config endpoints', () => {
   describe('BAZI_ENGINE_BASE_URL', () => {
