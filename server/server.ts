@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { GoogleGenAI } from '@google/genai';
 import { requestIdMiddleware } from './lib/requestId';
 import { GatewayError, formatErrorResponse } from './lib/errors';
+import analysisRouter from './routes/analysis';
 
 dotenv.config();
 
@@ -110,6 +111,9 @@ app.post('/api/symbol', async (req, res) => {
     res.status(error.statusCode).json(formatErrorResponse(error, req.id));
   }
 });
+
+// Routes
+app.use('/api/analysis', analysisRouter);
 
 // Global error handler
 app.use((err: unknown, req: express.Request, res: express.Response, _next: express.NextFunction) => {
