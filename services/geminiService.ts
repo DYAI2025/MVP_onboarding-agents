@@ -5,6 +5,18 @@
  * Errors are surfaced to the UI via ErrorCard.
  */
 
+import { REMOTE_SYMBOL_ENDPOINT } from '../src/config';
+
+// Use remote endpoint in production, local proxy in development
+const getApiEndpoint = (): string => {
+  // In development, Vite proxies /api to the local server
+  // In production, use the configured remote endpoint
+  if (import.meta.env.DEV) {
+    return '/api/symbol';
+  }
+  return REMOTE_SYMBOL_ENDPOINT;
+};
+
 export interface SymbolConfig {
   influence: 'western' | 'balanced' | 'eastern';
   transparentBackground?: boolean;
@@ -45,7 +57,7 @@ export const generateSymbol = async (
   };
 
   try {
-    const response = await fetch('/api/symbol', {
+    const response = await fetch(getApiEndpoint(), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
