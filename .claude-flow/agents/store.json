@@ -1,0 +1,41 @@
+{
+  "agents": {
+    "deps-agent": {
+      "agentId": "deps-agent",
+      "agentType": "coder",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "task": "Install dependencies: @supabase/supabase-js, jsonwebtoken, uuid and their types"
+      },
+      "createdAt": "2026-01-14T00:15:24.910Z",
+      "domain": "backend"
+    },
+    "errors-agent": {
+      "agentId": "errors-agent",
+      "agentType": "coder",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "task": "Create server/lib/errors.ts with GatewayError class and formatErrorResponse function"
+      },
+      "createdAt": "2026-01-14T00:15:25.229Z",
+      "domain": "backend"
+    },
+    "middleware-agent": {
+      "agentId": "middleware-agent",
+      "agentType": "coder",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "task": "Create server/lib/requestId.ts middleware for request ID generation"
+      },
+      "createdAt": "2026-01-14T00:15:25.500Z",
+      "domain": "backend"
+    }
+  },
+  "version": "3.0.0"
+}

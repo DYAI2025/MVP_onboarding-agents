@@ -6,6 +6,9 @@ import { requestIdMiddleware } from './lib/requestId';
 import { GatewayError, formatErrorResponse } from './lib/errors';
 import { uploadImageToStorage } from './lib/storageUpload';
 import analysisRouter from './routes/analysis';
+import agentSessionRouter from './routes/agentSession';
+import agentToolsRouter from './routes/agentTools';
+import elevenLabsWebhookRouter from './routes/elevenLabsWebhook';
 
 dotenv.config();
 
@@ -13,7 +16,21 @@ const app = express();
 const PORT = process.env.PORT || 8787;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    // Allow any localhost origin for development
+    if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+      return callback(null, true);
+    }
+    // Fallback for other origins
+    callback(null, true);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
+}));
 app.use(express.json());
 app.use(requestIdMiddleware);
 
@@ -121,6 +138,9 @@ app.post('/api/symbol', async (req, res) => {
 
 // Routes
 app.use('/api/analysis', analysisRouter);
+app.use('/api/agent/session', agentSessionRouter);
+app.use('/api/agent/tools', agentToolsRouter);
+app.use('/api/webhooks/elevenlabs', elevenLabsWebhookRouter);
 
 // Global error handler
 app.use((err: unknown, req: express.Request, res: express.Response, _next: express.NextFunction) => {

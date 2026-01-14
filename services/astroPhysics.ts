@@ -61,7 +61,7 @@ const SOLAR_TERM_START_DAYS = [6, 4, 6, 5, 6, 6, 7, 8, 8, 8, 7, 7];
 const getWesternSign = (date: Date): string => {
   const day = date.getDate();
   const month = date.getMonth() + 1;
-  
+
   if ((month == 1 && day <= 19) || (month == 12 && day >= 22)) return "Capricorn";
   if ((month == 1 && day >= 20) || (month == 2 && day <= 18)) return "Aquarius";
   if ((month == 2 && day >= 19) || (month == 3 && day <= 20)) return "Pisces";
@@ -79,17 +79,17 @@ const getWesternSign = (date: Date): string => {
 
 const calculateBaZi = (date: Date) => {
   const year = date.getFullYear();
-  const month = date.getMonth(); 
+  const month = date.getMonth();
   const day = date.getDate();
 
   let baZiYear = year;
   if (month < 1 || (month === 1 && day < 4)) {
     baZiYear -= 1;
   }
-  
+
   const yearStemIndex = (baZiYear - 4) % 10;
   const normalizedYearStem = yearStemIndex < 0 ? yearStemIndex + 10 : yearStemIndex;
-  
+
   const yearBranchIndex = (baZiYear - 4) % 12;
   const normalizedYearBranch = yearBranchIndex < 0 ? yearBranchIndex + 12 : yearBranchIndex;
 
@@ -98,9 +98,9 @@ const calculateBaZi = (date: Date) => {
 
   const cutoffDay = SOLAR_TERM_START_DAYS[month];
   let monthBranchIndex;
-  
+
   const solarMonthMapping = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0];
-  
+
   if (day >= cutoffDay) {
     monthBranchIndex = solarMonthMapping[month];
   } else {
@@ -112,13 +112,13 @@ const calculateBaZi = (date: Date) => {
 
   const refDate = new Date(Date.UTC(1900, 0, 1));
   const targetDate = new Date(Date.UTC(year, month, day));
-  
+
   const diffTime = targetDate.getTime() - refDate.getTime();
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-  
+
   let dayStemIndex = (4 + diffDays) % 10;
   if (dayStemIndex < 0) dayStemIndex += 10;
-  
+
   let dayBranchIndex = (10 + diffDays) % 12;
   if (dayBranchIndex < 0) dayBranchIndex += 12;
 
@@ -139,7 +139,7 @@ const calculateBaZi = (date: Date) => {
 
 const calculateAscendantSim = (sign: string, hour: number) => {
   const signIndex = ZODIAC_SIGNS.indexOf(sign);
-  const offset = Math.floor((hour - 6) / 2); 
+  const offset = Math.floor((hour - 6) / 2);
   const ascIndex = (signIndex + offset + 12) % 12;
   return ZODIAC_SIGNS[ascIndex];
 };
@@ -147,9 +147,9 @@ const calculateAscendantSim = (sign: string, hour: number) => {
 const calculateMoonSign = (date: Date): string => {
   const jd = (date.getTime() / 86400000) + 2440587.5;
   const d = jd - 2451545.0;
-  const L = 218.316 + 13.176396 * d; 
+  const L = 218.316 + 13.176396 * d;
   const M = 134.963 + 13.064993 * d;
-  
+
   const normalize = (deg: number) => {
     deg = deg % 360;
     if (deg < 0) deg += 360;
@@ -176,34 +176,34 @@ const synthesizeIdentity = (western: WesternAnalysis, eastern: EasternAnalysis) 
 
   // 1. Element Interaction Logic (Combining Western Element and Day Master)
   if (dayMaster === westernElement) {
-     synthesisTitle = `The Pure ${dayMaster} Sovereign`;
-     synthesisDescription = `Your core essence (${dayMaster}) is perfectly aligned with your astrological temperament. You possess an undiluted, focused power that resonates through every level of your being.`;
-     artisticDirective = "Emphasize perfect symmetry and monochromatic elegance to reflect undiluted purity.";
+    synthesisTitle = `The Pure ${dayMaster} Sovereign`;
+    synthesisDescription = `Your core essence (${dayMaster}) is perfectly aligned with your astrological temperament. You possess an undiluted, focused power that resonates through every level of your being.`;
+    artisticDirective = "Emphasize perfect symmetry and monochromatic elegance to reflect undiluted purity.";
   } else if (westernElement === "Fire" && dayMaster === "Wood") {
-     synthesisTitle = "The Burning Visionary";
-     synthesisDescription = "Wood feeds Fire. Your inner nature fuels your outward expression, creating a personality of tireless creativity and magnetic leadership.";
-     artisticDirective = "Incorporate leaf-like organic motifs that transition into stylized, sharp flame geometry.";
+    synthesisTitle = "The Burning Visionary";
+    synthesisDescription = "Wood feeds Fire. Your inner nature fuels your outward expression, creating a personality of tireless creativity and magnetic leadership.";
+    artisticDirective = "Incorporate leaf-like organic motifs that transition into stylized, sharp flame geometry.";
   } else if (westernElement === "Water" && dayMaster === "Metal") {
-     synthesisTitle = "The Fluid Alchemist";
-     synthesisDescription = "Metal generates Water. Your disciplined mind and structured thoughts give rise to profound intuition and emotional depth.";
-     artisticDirective = "Use sharp, metallic polished edges that contain or give birth to flowing, organic water-like curves.";
+    synthesisTitle = "The Fluid Alchemist";
+    synthesisDescription = "Metal generates Water. Your disciplined mind and structured thoughts give rise to profound intuition and emotional depth.";
+    artisticDirective = "Use sharp, metallic polished edges that contain or give birth to flowing, organic water-like curves.";
   } else if (westernElement === "Earth" && dayMaster === "Fire") {
-     synthesisTitle = "The Volcanic Architect";
-     synthesisDescription = "Fire creates Earth. Your inner passion is the foundation upon which you build your reality—solid, vibrant, and enduring.";
-     artisticDirective = "Dense, heavy geometric bases with radiant, glowing interior lines suggesting subterranean energy.";
+    synthesisTitle = "The Volcanic Architect";
+    synthesisDescription = "Fire creates Earth. Your inner passion is the foundation upon which you build your reality—solid, vibrant, and enduring.";
+    artisticDirective = "Dense, heavy geometric bases with radiant, glowing interior lines suggesting subterranean energy.";
   } else if (westernElement === "Air" && dayMaster === "Water") {
-     synthesisTitle = "The Mist Navigator";
-     synthesisDescription = "Air moves Water. You are adaptable and elusive, finding your way through life's complexities with intellectual grace and emotional wisdom.";
-     artisticDirective = "Whispy, ethereal strokes and concentric circles representing ripples in the sky.";
+    synthesisTitle = "The Mist Navigator";
+    synthesisDescription = "Air moves Water. You are adaptable and elusive, finding your way through life's complexities with intellectual grace and emotional wisdom.";
+    artisticDirective = "Whispy, ethereal strokes and concentric circles representing ripples in the sky.";
   } else if (dayMaster === "Earth") {
-     synthesisTitle = "The Grounded Guardian";
-     synthesisDescription = `Anchored by an Earth Day Master, you remain a stable force. Your ${westernElement} energy provides the drive, but your core remains unshakeable.`;
-     artisticDirective = "Strong verticality and square-based abstractions with subtle elemental highlights.";
+    synthesisTitle = "The Grounded Guardian";
+    synthesisDescription = `Anchored by an Earth Day Master, you remain a stable force. Your ${westernElement} energy provides the drive, but your core remains unshakeable.`;
+    artisticDirective = "Strong verticality and square-based abstractions with subtle elemental highlights.";
   }
 
   // 2. Animal-Specific Flair (Chinese Zodiac Year Animal)
   let animalVibe = "";
-  switch(animal) {
+  switch (animal) {
     case 'Dragon': animalVibe = "mythical scales, winding serpent-like power, celestial orbs, and imperial authority"; break;
     case 'Tiger': animalVibe = "bold stripes, predatory grace, hidden explosive strength in the linework"; break;
     case 'Rat': animalVibe = "intricate small-scale detail, clever geometry, hidden nodes of resourcefulness"; break;
@@ -236,22 +236,20 @@ const synthesizeIdentity = (western: WesternAnalysis, eastern: EasternAnalysis) 
     Artistic Directive: ${artisticDirective} Incorporate elements of ${animalVibe}.
     
     Composition: A central celestial structure. 
-    - Element of ${westernElement}: ${
-      westernElement === 'Fire' ? 'Radiating sparks, sharp upward vertices, glowing embers.' : 
-      westernElement === 'Water' ? 'Soft overlapping waves, teardrop geometry, fluid sine-waves.' : 
-      westernElement === 'Earth' ? 'Layered strata, crystalline blocks, solid foundations.' : 
-      'Thin sweeping arcs, atmospheric transparency, parallel wind-lines.'
+    - Element of ${westernElement}: ${westernElement === 'Fire' ? 'Radiating sparks, sharp upward vertices, glowing embers.' :
+      westernElement === 'Water' ? 'Soft overlapping waves, teardrop geometry, fluid sine-waves.' :
+        westernElement === 'Earth' ? 'Layered strata, crystalline blocks, solid foundations.' :
+          'Thin sweeping arcs, atmospheric transparency, parallel wind-lines.'
     }
     
     Specific Details: 
     - Include a specific golden node on an outer orbit representing the ${sunSign} sun placement.
     - The overall mark should reflect the ${synthesisTitle} theme.
     - Avoid literal or cartoonish depictions; aim for a high-end luxury brand emblem or watch-face detail.
-    - Color Palette: ${
-      westernElement === 'Fire' ? 'Warm Gold, Ochre, and Charcoal' : 
-      westernElement === 'Water' ? 'Deep Indigo, Silver, and Pearl' : 
-      westernElement === 'Earth' ? 'Copper, Moss Green, and Sand' : 
-      'Champagne, Slate Blue, and White'
+    - Color Palette: ${westernElement === 'Fire' ? 'Warm Gold, Ochre, and Charcoal' :
+      westernElement === 'Water' ? 'Deep Indigo, Silver, and Pearl' :
+        westernElement === 'Earth' ? 'Copper, Moss Green, and Sand' :
+          'Champagne, Slate Blue, and White'
     }.
     
     Vibe: No text. No 3D perspective. Icon-ready. ${celestialFocus}
@@ -264,12 +262,12 @@ const synthesizeIdentity = (western: WesternAnalysis, eastern: EasternAnalysis) 
 
 const calculateLocalAnalysis = (dateObj: Date): { western: WesternAnalysis, eastern: EasternAnalysis } => {
   const hour = dateObj.getHours();
-  
+
   const sunSign = getWesternSign(dateObj);
   const ascendant = calculateAscendantSim(sunSign, hour);
   const moonSign = calculateMoonSign(dateObj);
   const westernElement = ZODIAC_ELEMENTS[sunSign] || "Air";
-  
+
   const baZi = calculateBaZi(dateObj);
 
   return {
@@ -305,7 +303,7 @@ const fetchRemoteAnalysis = async (data: BirthData): Promise<FusionResult | null
       lng: data.long, // Note: type uses 'long', API might expect 'lng' or 'long'
       location: data.location
     };
-    
+
     console.log(`[AstroPhysics] Requesting remote analysis from ${REMOTE_ANALYSIS_ENDPOINT}...`, payload);
 
     const response = await fetch(REMOTE_ANALYSIS_ENDPOINT, {
@@ -321,9 +319,15 @@ const fetchRemoteAnalysis = async (data: BirthData): Promise<FusionResult | null
     if (response.ok) {
       const result = await response.json();
       console.log("✅ Remote analysis received:", result);
-      // Validate structure (basic check)
-      if (result.synthesisTitle && result.western && result.eastern) {
-        return result as FusionResult;
+
+      // Handle the nested structure from Gateway ({ chart_id, analysis: {...} })
+      const analysisData = result.analysis || result;
+
+      if (analysisData.synthesisTitle && analysisData.western && analysisData.eastern) {
+        return {
+          ...analysisData,
+          chartId: result.chart_id
+        } as FusionResult;
       }
     } else {
       console.warn(`⚠️ Remote analysis returned ${response.status}. Falling back to local.`);
@@ -336,7 +340,7 @@ const fetchRemoteAnalysis = async (data: BirthData): Promise<FusionResult | null
 
 export const runFusionAnalysis = async (data: BirthData): Promise<FusionResult> => {
   const dateObj = new Date(data.date + 'T' + data.time);
-  
+
   // 1. Try Remote Analysis first
   const remoteResult = await fetchRemoteAnalysis(data);
   if (remoteResult) {

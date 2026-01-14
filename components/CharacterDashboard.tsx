@@ -460,8 +460,9 @@ export const CharacterDashboard: React.FC<Props> = ({
                     </div>
                     <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden shadow-inner">
                       <div
-                        className="h-full bg-[#0B1221] rounded-full transition-all duration-[2000ms] ease-out shadow-[0_0_15px_rgba(11,18,33,0.3)]"
-                        style={{ width: `${val}%` }}
+                        className="h-full bg-[#0B1221] rounded-full transition-all duration-[2000ms] ease-out shadow-[0_0_15px_rgba(11,18,33,0.3)] dynamic-progress-bar"
+                        // eslint-disable-next-line
+                        style={{ '--progress-width': `${val}%` } as React.CSSProperties}
                       ></div>
                     </div>
                     {/* Dashed line effect decorative */}
