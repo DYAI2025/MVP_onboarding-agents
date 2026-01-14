@@ -7,7 +7,7 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install ALL dependencies (including devDependencies for build)
+# Install ALL dependencies
 RUN npm ci
 
 # Copy source code
@@ -25,15 +25,11 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --only=production
 
-# Install tsx for running TypeScript server
-RUN npm install -g tsx
-
 # Copy built frontend from builder stage
 COPY --from=builder /app/dist ./dist
 
-# Copy server code
-COPY server ./server
-COPY src ./src
+# Copy everything else for the server (tsx needs the source files)
+COPY . .
 
 # Expose port
 EXPOSE 8787
@@ -42,5 +38,5 @@ EXPOSE 8787
 ENV NODE_ENV=production
 ENV PORT=8787
 
-# Start the server
-CMD ["tsx", "server/server.ts"]
+# Start the server using the local tsx in node_modules
+CMD ["./node_modules/.bin/tsx", "server/server.ts"]
