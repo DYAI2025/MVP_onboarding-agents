@@ -1,6 +1,6 @@
 # Multi-stage build for Full-Stack Deployment
 # Stage 1: Build Frontend
-FROM node:20-slim AS builder
+FROM node:20 AS builder
 
 WORKDIR /app
 
@@ -17,7 +17,7 @@ COPY . .
 RUN npm run build
 
 # Stage 2: Production Runtime
-FROM node:20-slim AS runner
+FROM node:20 AS runner
 
 WORKDIR /app
 
@@ -28,8 +28,8 @@ RUN npm ci --only=production
 # Copy built frontend from builder stage
 COPY --from=builder /app/dist ./dist
 
-# Copy everything else for the server (tsx needs the source files)
-COPY . .
+# Copy server code and its internal dependencies
+COPY server ./server
 
 # Expose port
 EXPOSE 8787
@@ -38,5 +38,5 @@ EXPOSE 8787
 ENV NODE_ENV=production
 ENV PORT=8787
 
-# Start the server using the local tsx in node_modules
-CMD ["./node_modules/.bin/tsx", "server/server.ts"]
+# Start the server using npm start (which calls tsx)
+CMD ["npm", "start"]
