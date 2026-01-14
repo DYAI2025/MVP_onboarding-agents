@@ -51,7 +51,7 @@ fly logs
 fly open
 
 # Health check
-curl https://stellar-onboarding-gateway.fly.dev/health
+curl https://bazodiac.fly.dev/health
 ```
 
 ## Troubleshooting
@@ -78,7 +78,7 @@ fly ssh console
 ### Restart the app
 
 ```bash
-fly apps restart stellar-onboarding-gateway
+fly apps restart bazodiac
 ```
 
 ## Environment Variables
@@ -110,7 +110,7 @@ fly apps restart stellar-onboarding-gateway
 └─────────────────────────────────────────────┘
               │
               ▼
-    https://stellar-onboarding-gateway.fly.dev
+    https://bazodiac.fly.dev
 ```
 
 The server handles both:

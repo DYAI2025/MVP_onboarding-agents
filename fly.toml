@@ -1,5 +1,5 @@
 # MVP Onboarding Agents - Full Stack Deployment on Fly.io
-app = "stellar-onboarding-gateway"
+app = "bazodiac"
 primary_region = "fra"
 
 [build]
