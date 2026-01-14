@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { GoogleGenAI } from '@google/genai';
 import { requestIdMiddleware } from './lib/requestId';
 import { GatewayError, formatErrorResponse } from './lib/errors';
+import { uploadImageToStorage } from './lib/storageUpload';
 import analysisRouter from './routes/analysis';
 
 dotenv.config();
@@ -94,8 +95,14 @@ app.post('/api/symbol', async (req, res) => {
     }
 
     if (imageBase64) {
+      // Try to upload to Supabase Storage
+      const uploadResult = await uploadImageToStorage(imageBase64, mimeType, 'symbols');
+
       res.json({
-        imageDataUrl: `data:${mimeType};base64,${imageBase64}`,
+        // Return storage URL if available, otherwise fall back to data URL
+        imageUrl: uploadResult?.url || `data:${mimeType};base64,${imageBase64}`,
+        imageDataUrl: `data:${mimeType};base64,${imageBase64}`, // Keep for backwards compatibility
+        storagePath: uploadResult?.path || null,
         durationMs: Date.now() - startTime,
         engine: 'proxy-gemini',
         request_id: req.id
