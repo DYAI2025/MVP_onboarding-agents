@@ -15,8 +15,8 @@ interface Props {
 }
 
 export const AgentSelectionView: React.FC<Props> = ({ result, symbolUrl, onAgentSelect, onBackToDashboard }) => {
-  // Fallback UI if essential data missing
-  if (!result || !symbolUrl) {
+  // Fallback UI only if result is missing (symbolUrl is now optional)
+  if (!result) {
     return (
       <div className="min-h-screen bg-[#0F1014] flex items-center justify-center p-6">
         <div className="text-center max-w-md">
@@ -35,6 +35,9 @@ export const AgentSelectionView: React.FC<Props> = ({ result, symbolUrl, onAgent
       </div>
     );
   }
+
+  // Placeholder for missing symbol
+  const displaySymbolUrl = symbolUrl || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="%230F1014" stroke="%23D4AF37" stroke-width="2"/><text x="50" y="55" text-anchor="middle" fill="%23D4AF37" font-size="24">✦</text></svg>';
 
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
   const [isChatActive, setIsChatActive] = useState(false);
@@ -172,7 +175,7 @@ export const AgentSelectionView: React.FC<Props> = ({ result, symbolUrl, onAgent
                 <div className="absolute inset-0 rounded-full border border-astro-gold/10 animate-[spin_30s_linear_infinite]"></div>
                 <div className="w-full h-full rounded-full overflow-hidden bg-black relative z-10 flex items-center justify-center">
                   <SmartImage
-                    src={symbolUrl}
+                    src={displaySymbolUrl}
                     alt="Symbol"
                     containerClassName="w-full h-full"
                     className="w-full h-full object-cover object-center"
@@ -260,7 +263,7 @@ export const AgentSelectionView: React.FC<Props> = ({ result, symbolUrl, onAgent
             <div className="w-80 h-80 md:w-[28rem] md:h-[28rem] rounded-full border border-white/10 bg-[#1E293B]/20 backdrop-blur-xl shadow-[0_0_60px_rgba(0,0,0,0.5)] flex items-center justify-center relative overflow-hidden transition-transform duration-700 hover:scale-[1.02]">
               <div className="w-[80%] h-[80%] rounded-full overflow-hidden relative z-10 border border-white/10 bg-black/40 shadow-2xl">
                 <SmartImage
-                  src={symbolUrl}
+                  src={displaySymbolUrl}
                   alt="Cosmic Fusion Symbol"
                   containerClassName="w-full h-full"
                   // Using absolute positioning to perfectly center the zoomed image
