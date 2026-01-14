@@ -7,14 +7,19 @@
 
 import { REMOTE_SYMBOL_ENDPOINT } from '../src/config';
 
-// Use remote endpoint in production, local proxy in development
+// Determine API endpoint based on deployment
 const getApiEndpoint = (): string => {
-  // In development, Vite proxies /api to the local server
-  // In production, use the configured remote endpoint
-  if (import.meta.env.DEV) {
-    return '/api/symbol';
+  // If a remote endpoint is explicitly configured (e.g., for Vercel static hosting),
+  // use it. Otherwise, use local /api/symbol which works for:
+  // - Development (Vite proxy -> localhost:8787)
+  // - Production on Fly.io (same-origin, backend serves frontend)
+  const remoteUrl = REMOTE_SYMBOL_ENDPOINT;
+  const isRemoteConfigured = remoteUrl && !remoteUrl.includes('localhost') && remoteUrl !== '/api/symbol';
+
+  if (isRemoteConfigured && import.meta.env.PROD) {
+    return remoteUrl;
   }
-  return REMOTE_SYMBOL_ENDPOINT;
+  return '/api/symbol';
 };
 
 export interface SymbolConfig {

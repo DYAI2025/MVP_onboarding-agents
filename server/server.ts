@@ -1,3 +1,5 @@
+import path from 'path';
+import { existsSync } from 'fs';
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -141,6 +143,31 @@ app.use('/api/analysis', analysisRouter);
 app.use('/api/agent/session', agentSessionRouter);
 app.use('/api/agent/tools', agentToolsRouter);
 app.use('/api/webhooks/elevenlabs', elevenLabsWebhookRouter);
+
+// --- STATIC FILE SERVING (Production) ---
+// In production, serve the built frontend from the dist folder
+const distPath = path.join(process.cwd(), 'dist');
+
+if (process.env.NODE_ENV === 'production' && existsSync(distPath)) {
+  console.log(JSON.stringify({ type: 'info', message: `Serving static files from ${distPath}` }));
+
+  // Serve static assets
+  app.use(express.static(distPath, {
+    maxAge: '1d', // Cache static assets for 1 day
+    etag: true
+  }));
+
+  // SPA Fallback: All non-API routes serve index.html
+  app.get('*', (req, res, next) => {
+    // Skip API routes
+    if (req.path.startsWith('/api/')) {
+      return next();
+    }
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+} else if (process.env.NODE_ENV === 'production') {
+  console.warn(JSON.stringify({ type: 'warning', message: `dist folder not found at ${distPath}` }));
+}
 
 // Global error handler
 app.use((err: unknown, req: express.Request, res: express.Response, _next: express.NextFunction) => {
