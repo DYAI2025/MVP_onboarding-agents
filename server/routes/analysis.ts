@@ -7,7 +7,7 @@ const router = Router();
 
 interface AnalysisRequest {
   birth: BirthInput;
-  user_id?: string; // Optional: for authenticated requests
+  user_id: string; // MANDATORY (from Supabase Auth)
 }
 
 interface WesternResult {
@@ -22,26 +22,35 @@ interface EasternResult {
 }
 
 router.post('/', async (req: Request, res: Response) => {
-  const { birth, user_id } = req.body as AnalysisRequest;
-
-  // Validate input
-  if (!birth || !birth.date || !birth.time || !birth.lat || !birth.lon) {
-    const error = new GatewayError('INVALID_INPUT', 'Missing required birth data fields', 400);
-    res.status(error.statusCode).json(formatErrorResponse(error, req.id));
-    return;
-  }
-
   try {
-    // Transform to engine format
-    const enginePayload = baziEngine.transformBirthData(birth);
+    const { birth, user_id } = req.body as AnalysisRequest;
 
-    // Call both engines in parallel
-    const [baziResult, westernResult] = await Promise.all([
-      baziEngine.calculateBazi(enginePayload),
-      baziEngine.calculateWestern(enginePayload)
-    ]) as [EasternResult, WesternResult];
+    // 1. Validate input (fail loud on missing fields)
+    if (!user_id) {
+      throw new GatewayError('INVALID_INPUT', 'Missing user_id (authentication required)', 400);
+    }
 
-    // Combine results
+    if (!birth || !birth.date || !birth.time || !birth.lat || !birth.lon) {
+      throw new GatewayError('INVALID_INPUT', 'Missing required birth data fields (date, time, lat, lon)', 400);
+    }
+
+    // 2. Call BaziEngine (fail loud if unavailable)
+    let baziResult: EasternResult;
+    let westernResult: WesternResult;
+
+    try {
+      const enginePayload = baziEngine.transformBirthData(birth);
+      [baziResult, westernResult] = await Promise.all([
+        baziEngine.calculateBazi(enginePayload),
+        baziEngine.calculateWestern(enginePayload)
+      ]) as [EasternResult, WesternResult];
+    } catch (engineError: unknown) {
+      console.error('[Analysis] BaziEngine call failed:', engineError);
+      const message = engineError instanceof Error ? engineError.message : 'BaziEngine not reachable';
+      throw new GatewayError('ENGINE_UNAVAILABLE', `BaziEngine failed: ${message}`, 500);
+    }
+
+    // 3. Combine results
     const analysis = {
       western: westernResult,
       eastern: baziResult,
@@ -51,32 +60,26 @@ router.post('/', async (req: Request, res: Response) => {
       prompt: generateSymbolPrompt(westernResult, baziResult)
     };
 
-    // Persist to Supabase if user_id provided
-    let chart_id: string | null = null;
-    if (user_id) {
-      try {
-        const supabase = getSupabaseAdmin();
-        const { data, error } = await supabase
-          .from('charts')
-          .insert({
-            user_id,
-            birth_json: birth,
-            analysis_json: analysis
-          })
-          .select('id')
-          .single();
+    // 4. Persist to Supabase (fail loud on error)
+    const supabase = getSupabaseAdmin();
+    const { data, error: insertError } = await supabase
+      .from('charts')
+      .insert({
+        user_id,
+        birth_json: birth,
+        analysis_json: analysis
+      })
+      .select('id')
+      .single();
 
-        if (error) {
-          console.error(JSON.stringify({ type: 'db_error', error: error.message, req_id: req.id }));
-        } else {
-          chart_id = data.id;
-        }
-      } catch (dbError) {
-        // Log but don't fail the request
-        console.error(JSON.stringify({ type: 'db_error', error: 'Supabase not configured', req_id: req.id }));
-      }
+    if (insertError || !data) {
+      console.error('[Analysis] DB insert failed:', insertError);
+      throw new GatewayError('DB_INSERT_FAILED', `Failed to save chart: ${insertError?.message || 'unknown error'}`, 500);
     }
 
+    const chart_id = data.id;
+
+    // 5. Return success response
     res.json({
       chart_id,
       analysis,
@@ -88,6 +91,7 @@ router.post('/', async (req: Request, res: Response) => {
       res.status(error.statusCode).json(formatErrorResponse(error, req.id));
       return;
     }
+    console.error('[Analysis] Unexpected error:', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
     const gatewayError = new GatewayError('ANALYSIS_FAILED', message, 500);
     res.status(gatewayError.statusCode).json(formatErrorResponse(gatewayError, req.id));
