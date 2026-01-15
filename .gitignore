@@ -32,4 +32,6 @@ hallpass
 .claude
 .claude-flow
 .swarm
+*.zip
+MVP_onboarding-agents-main*
 
