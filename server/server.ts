@@ -150,25 +150,43 @@ app.use('/api/transits', transitsRouter);
 // In production, serve the built frontend from the dist folder
 const distPath = path.join(process.cwd(), 'dist');
 
-if (process.env.NODE_ENV === 'production' && existsSync(distPath)) {
-  console.log(JSON.stringify({ type: 'info', message: `Serving static files from ${distPath}` }));
-
-  // Serve static assets
-  app.use(express.static(distPath, {
-    maxAge: '1d', // Cache static assets for 1 day
-    etag: true
+if (process.env.NODE_ENV === 'production') {
+  console.log(JSON.stringify({
+    type: 'startup_info',
+    message: 'Checking for static files',
+    path: distPath,
+    exists: existsSync(distPath)
   }));
 
-  // SPA Fallback: All non-API routes serve index.html
-  app.get('*', (req, res, next) => {
-    // Skip API routes
-    if (req.path.startsWith('/api/')) {
-      return next();
-    }
-    res.sendFile(path.join(distPath, 'index.html'));
-  });
-} else if (process.env.NODE_ENV === 'production') {
-  console.warn(JSON.stringify({ type: 'warning', message: `dist folder not found at ${distPath}` }));
+  if (existsSync(distPath)) {
+    console.log(JSON.stringify({ type: 'info', message: `Serving static files from ${distPath}` }));
+
+    // Serve static assets
+    app.use(express.static(distPath, {
+      maxAge: '1d',
+      etag: true
+    }));
+
+    // SPA Fallback
+    app.get('*', (req, res, next) => {
+      if (req.path.startsWith('/api/')) return next();
+
+      const indexPath = path.join(distPath, 'index.html');
+      if (existsSync(indexPath)) {
+        res.sendFile(indexPath);
+      } else {
+        console.error(JSON.stringify({ type: 'error', message: 'index.html not found in dist', path: indexPath }));
+        res.status(404).send('Frontend not found. Please check build.');
+      }
+    });
+  } else {
+    console.warn(JSON.stringify({ type: 'warning', message: `dist folder not found at ${distPath}. Did you run npm run build?` }));
+
+    // Fallback if dist is missing but health check needs to pass
+    app.get('/', (req, res) => {
+      res.status(200).send('Server is running, but dist/ folder is missing. Check Docker build stage.');
+    });
+  }
 }
 
 // Global error handler
