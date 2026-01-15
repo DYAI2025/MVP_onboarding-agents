@@ -297,11 +297,13 @@ import { REMOTE_ANALYSIS_ENDPOINT } from '../src/config';
 const fetchRemoteAnalysis = async (data: BirthData): Promise<FusionResult | null> => {
   try {
     const payload = {
-      date: data.date,
-      time: data.time,
-      lat: data.lat,
-      lng: data.long, // Note: type uses 'long', API might expect 'lng' or 'long'
-      location: data.location
+      birth: {
+        date: data.date,
+        time: data.time,
+        lat: data.lat,
+        lon: data.long,
+        place: data.location
+      }
     };
 
     console.log(`[AstroPhysics] Requesting remote analysis from ${REMOTE_ANALYSIS_ENDPOINT}...`, payload);
