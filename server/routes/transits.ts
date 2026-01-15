@@ -65,19 +65,44 @@ const getSunPosition = (date: Date) => {
 
 const getPlanetPosition = (date: Date, planet: string) => {
   const jd = getJulianDate(date);
+
   const periods: Record<string, number> = {
-    Mercury: 87.97, Venus: 224.7, Mars: 686.98,
-    Jupiter: 4332.59, Saturn: 10759.22, Uranus: 30688.5,
-    Neptune: 60182, Pluto: 90560
+    Mercury: 87.97,
+    Venus: 224.7,
+    Mars: 686.98,
+    Jupiter: 4332.59,
+    Saturn: 10759.22,
+    Uranus: 30688.5,
+    Neptune: 60182,
+    Pluto: 90560
   };
+
+  // Simple per-planet retrograde pattern so the heuristic
+  // is explicitly planet-dependent.
+  const retrogradePatterns: Record<string, { frequency: number; phase: number }> = {
+    Mercury: { frequency: 60, phase: 0 },
+    Venus: { frequency: 80, phase: 0.5 },
+    Mars: { frequency: 120, phase: 1 },
+    Jupiter: { frequency: 200, phase: 1.5 },
+    Saturn: { frequency: 260, phase: 2 },
+    Uranus: { frequency: 320, phase: 2.5 },
+    Neptune: { frequency: 380, phase: 3 },
+    Pluto: { frequency: 440, phase: 3.5 }
+  };
+
   const period = periods[planet] || 365;
   const baseDeg = (jd % period) / period * 360;
   const signIndex = Math.floor(baseDeg / 30);
   const degree = Math.floor(baseDeg % 30);
+
+  const retroPattern = retrogradePatterns[planet] || { frequency: 180, phase: 0 };
+  const retroSignal = Math.sin(jd / retroPattern.frequency + retroPattern.phase);
+  const isRetro = retroSignal < -0.8;
+
   return {
     sign: ZODIAC_SIGNS[signIndex % 12] || 'Aries',
     degree: Number.isNaN(degree) ? 0 : degree,
-    isRetro: Math.sin(jd / 100) < -0.8
+    isRetro
   };
 };
 
