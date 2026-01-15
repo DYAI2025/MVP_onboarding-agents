@@ -24,6 +24,7 @@ export interface EasternAnalysis {
 }
 
 export interface FusionResult {
+  chartId?: string; // Persistent ID from database
   synthesisTitle: string;
   synthesisDescription: string;
   elementMatrix: string;
@@ -76,7 +77,7 @@ export interface PersonalityResult {
 export interface QuestionOption {
   text: string;
   // For personality quizzes, maps result IDs (or traits) to weight values
-  weights?: Record<string, number>; 
+  weights?: Record<string, number>;
 }
 
 export interface Question {

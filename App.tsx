@@ -71,43 +71,46 @@ function AppContent() {
 
   // Load Persistence
   useEffect(() => {
-    const savedState = loadState();
-    if (savedState) {
-      console.log("Loading saved journey state...", savedState);
-      if (savedState.analysisResult) {
-        setAnalysisResult(savedState.analysisResult);
-        setAstroState(CalculationState.COMPLETE);
-      }
-      if (savedState.generatedImage) {
-        setGeneratedImage(savedState.generatedImage);
-      }
-      if (savedState.selectedAgent) {
-        setSelectedAgent(savedState.selectedAgent);
-      }
+    const initJourney = async () => {
+      const savedState = await loadState();
+      if (savedState) {
+        console.log("Loading saved journey state...", savedState);
+        if (savedState.analysisResult) {
+          setAnalysisResult(savedState.analysisResult);
+          setAstroState(CalculationState.COMPLETE);
+        }
+        if (savedState.generatedImage) {
+          setGeneratedImage(savedState.generatedImage);
+        }
+        if (savedState.selectedAgent) {
+          setSelectedAgent(savedState.selectedAgent);
+        }
 
-      // Smart Navigation Recovery (Enhanced for Happy Path)
-      if (savedState.selectedAgent) {
-        setCurrentView('character_dashboard');
-      } else if (savedState.generatedImage) {
-        setCurrentView('agent_selection');
-        setIsChatActive(false);
-      } else if (savedState.analysisResult) {
-        setCurrentView('dashboard');
-        // If we have analysis but no image, in force mode we might want to auto-trigger? 
-        // But better to let user see the analysis first unless logic dictates otherwise.
+        // Smart Navigation Recovery (Enhanced for Happy Path)
+        if (savedState.selectedAgent) {
+          setCurrentView('character_dashboard');
+        } else if (savedState.generatedImage) {
+          setCurrentView('agent_selection');
+          setIsChatActive(false);
+        } else if (savedState.analysisResult) {
+          setCurrentView('dashboard');
+        }
       }
-    }
+    };
+
+    initJourney();
   }, []);
 
   // Save Persistence
   useEffect(() => {
     if (analysisResult || generatedImage || selectedAgent) {
+      // Async save (fire and forget)
       saveState({
         analysisResult,
         generatedImage,
         selectedAgent,
         lastView: currentView // Optional to track
-      });
+      }).catch(err => console.error("Background save failed:", err));
     }
   }, [analysisResult, generatedImage, selectedAgent, currentView]);
 
@@ -147,31 +150,30 @@ function AppContent() {
 
       setGeneratedImage(result.imageUrl);
       setGenerationStats({
-        engine: result.engineUsed,
+        engine: result.engine,
         durationMs: result.durationMs,
-        error: result.error
+        error: undefined
       });
 
       setAstroState(CalculationState.FINISHED);
-
-      // Auto-navigate to Agent Selection
-      // Increased delay to 2.0s to allow user to see "Visual Confirmation" state
-      setTimeout(() => {
-        setCurrentView('agent_selection');
-        setIsChatActive(false);
-      }, 2000);
 
     } catch (error) {
       console.error("Critical generation error", error);
       setAstroState(CalculationState.COMPLETE);
 
-      // Even on error, if FORCE_HAPPY_PATH, ensures we don't block. 
-      // But generateSymbol logic now guarantees return, so this catch handles only catastrophic app errors.
-      if (FORCE_HAPPY_PATH) {
-        // Should theoretically not happen with new geminiService
+      // Error handling: If generation fails, we still want to proceed to the agent selection
+      // This ensures the user isn't stuck on the analysis screen.
+      setGenerationStats({
+        engine: 'failed',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    } finally {
+      // Auto-navigate to Agent Selection regardless of success/failure
+      // Increased delay to 2.0s to allow user to see "Visual Confirmation" state or failure state
+      setTimeout(() => {
         setCurrentView('agent_selection');
         setIsChatActive(false);
-      }
+      }, 2000);
     }
   };
 

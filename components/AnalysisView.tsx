@@ -103,25 +103,7 @@ export const AnalysisView: React.FC<Props> = ({ result, state, onGenerateImage, 
   const glowHueShift = 135 + scrollProgress * 45 + (normalizedMouseDist * 15) + (autoPulse * 20);
   const blurAmount = Math.abs(scrollProgress) * 4 + (normalizedMouseDist * 2) + (autoPulse * 4);
 
-  // Dynamic Styles (Refactored for cleanliness)
-  const glowStyle = {
-    background: `linear-gradient(${glowHueShift}deg, rgba(212,175,55,${glowAlpha}) 0%, transparent 50%, rgba(245,243,255,${glowAlpha * 0.5}) 100%)`,
-    opacity: isHovering ? 1 : 0.8,
-    filter: `blur(${blurAmount}px)`
-  };
 
-  const cardTransformStyle = {
-    transform: `translateY(${parallaxOffset * 1.5}px) scale(${dynamicScale}) rotateX(${normalizedRotation}deg) rotateY(${normalizedRotationY}deg)`
-  };
-
-  const orbitDelayStyle = {
-    animationDelay: '1.5s'
-  };
-
-  const separatorStyle = {
-    width: isHovering ? '16rem' : '6rem',
-    opacity: 0.5 + autoPulse * 0.5
-  };
 
   return (
     <div className="space-y-12 md:space-y-16 animate-fade-in w-full pb-20">
@@ -199,21 +181,28 @@ export const AnalysisView: React.FC<Props> = ({ result, state, onGenerateImage, 
         >
           {/* Primary Dynamic Gradient */}
           <div
-            className="absolute inset-0 pointer-events-none transition-all duration-1000 will-change-[background,opacity,filter]"
-            style={glowStyle}
+            className="absolute inset-0 pointer-events-none transition-all duration-1000 will-change-[background,opacity,filter] dynamic-glow"
+            // eslint-disable-next-line
+            style={{
+              '--glow-bg': `linear-gradient(${glowHueShift}deg, rgba(212,175,55,${glowAlpha}) 0%, transparent 50%, rgba(245,243,255,${glowAlpha * 0.5}) 100%)`,
+              '--glow-opacity': isHovering ? 1 : 0.8,
+              '--glow-filter': `blur(${blurAmount}px)`
+            } as React.CSSProperties}
           ></div>
 
           <div
-            className="relative z-10 p-6 md:p-16 will-change-transform transition-all duration-500 ease-out flex flex-col items-center max-w-5xl"
-            style={cardTransformStyle}
+            className="relative z-10 p-6 md:p-16 will-change-transform transition-all duration-500 ease-out flex flex-col items-center max-w-5xl dynamic-card-transform"
+            // eslint-disable-next-line
+            style={{
+              '--card-transform': `translateY(${parallaxOffset * 1.5}px) scale(${dynamicScale}) rotateX(${normalizedRotation}deg) rotateY(${normalizedRotationY}deg)`
+            } as React.CSSProperties}
           >
             <div className="inline-flex items-center gap-4 mb-8 md:mb-12">
               <span className={`w-1.5 h-1.5 rounded-full bg-astro-gold transition-all duration-500 animate-pulse-soft ${isHovering ? 'scale-150 shadow-[0_0_12px_#D4AF37]' : ''}`}></span>
               <span className="font-serif text-sm md:text-xl italic tracking-[0.2em] text-astro-gold font-medium transition-all duration-700 group-hover:tracking-[0.3em]">
                 {t.analysis.solar_signature}: {result.western.sunSign}
               </span>
-              <span className={`w-1.5 h-1.5 rounded-full bg-astro-gold transition-all duration-500 animate-pulse-soft ${isHovering ? 'scale-150 shadow-[0_0_12px_#D4AF37]' : ''}`} 
-              style={orbitDelayStyle}></span>
+              <span className={`w-1.5 h-1.5 rounded-full bg-astro-gold transition-all duration-500 animate-pulse-soft delay-1500 ${isHovering ? 'scale-150 shadow-[0_0_12px_#D4AF37]' : ''}`}></span>
             </div>
 
             <div className="relative group/text cursor-default px-4">
@@ -223,8 +212,12 @@ export const AnalysisView: React.FC<Props> = ({ result, state, onGenerateImage, 
             </div>
 
             <div
-              className={`mt-12 h-1 transition-all duration-1000 bg-gradient-to-r from-transparent via-astro-gold/40 to-transparent`}
-              style={separatorStyle}
+              className={`mt-12 h-1 transition-all duration-1000 bg-gradient-to-r from-transparent via-astro-gold/40 to-transparent dynamic-separator`}
+              // eslint-disable-next-line
+              style={{
+                '--sep-width': isHovering ? '16rem' : '6rem',
+                '--sep-opacity': 0.5 + autoPulse * 0.5
+              } as React.CSSProperties}
             ></div>
           </div>
         </div>

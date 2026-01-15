@@ -1,0 +1,25 @@
+/* Dynamic Styles for AnalysisView and CharacterDashboard */
+
+.dynamic-glow {
+  background: var(--glow-bg);
+  opacity: var(--glow-opacity);
+  filter: var(--glow-filter);
+}
+
+.dynamic-card-transform {
+  transform: var(--card-transform);
+}
+
+/* Replaces orbitDelayStyle */
+.delay-1500 {
+  animation-delay: 1.5s;
+}
+
+.dynamic-separator {
+  width: var(--sep-width);
+  opacity: var(--sep-opacity);
+}
+
+.dynamic-progress-bar {
+  width: var(--progress-width);
+}

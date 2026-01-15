@@ -1,5 +1,26 @@
+/**
+ * Symbol Generation Service
+ *
+ * Production-first: Calls gateway only, no fallbacks.
+ * Errors are surfaced to the UI via ErrorCard.
+ */
 
-import { DEMO_MODE, REMOTE_SYMBOL_ENDPOINT, LOCAL_PROXY_URL } from '../src/config';
+import { REMOTE_SYMBOL_ENDPOINT } from '../src/config';
+
+// Determine API endpoint based on deployment
+const getApiEndpoint = (): string => {
+  // If a remote endpoint is explicitly configured (e.g., for Vercel static hosting),
+  // use it. Otherwise, use local /api/symbol which works for:
+  // - Development (Vite proxy -> localhost:8787)
+  // - Production on Fly.io (same-origin, backend serves frontend)
+  const remoteUrl = REMOTE_SYMBOL_ENDPOINT;
+  const isRemoteConfigured = remoteUrl && !remoteUrl.includes('localhost') && remoteUrl !== '/api/symbol';
+
+  if (isRemoteConfigured && import.meta.env.PROD) {
+    return remoteUrl;
+  }
+  return '/api/symbol';
+};
 
 export interface SymbolConfig {
   influence: 'western' | 'balanced' | 'eastern';
@@ -8,162 +29,87 @@ export interface SymbolConfig {
 
 export interface GenerationResult {
   imageUrl: string;
-  engineUsed: 'remote' | 'proxy' | 'placeholder' | 'demo_local_svg';
+  storagePath?: string | null;
+  engine: string;
   durationMs?: number;
-  error?: string;
+  requestId?: string;
+}
+
+export class SymbolGenerationError extends Error {
+  public readonly code: string;
+  public readonly requestId?: string;
+
+  constructor(code: string, message: string, requestId?: string) {
+    super(message);
+    this.name = 'SymbolGenerationError';
+    this.code = code;
+    this.requestId = requestId;
+  }
 }
 
 /**
- * Generates a deterministic SVG based on a hash of the prompt.
- * Always succeeds, requires no network.
+ * Generates a symbol via the gateway API.
+ * No fallbacks - errors are thrown and should be handled by the UI.
  */
-const generateLocalSVG = (prompt: string, config?: SymbolConfig): string => {
-  // Simple hash function to get a number from string
-  let hash = 0;
-  const str = prompt + JSON.stringify(config || {});
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) - hash) + str.charCodeAt(i);
-    hash |= 0; // Convert to 32bit integer
-  }
+export const generateSymbol = async (
+  basePrompt: string,
+  config?: SymbolConfig
+): Promise<GenerationResult> => {
+  const payload = {
+    prompt: basePrompt,
+    style: config?.influence || 'balanced',
+    mode: config?.transparentBackground ? 'transparent' : 'cinematic'
+  };
 
-  const hue = Math.abs(hash % 360);
-  const hue2 = (hue + 40) % 360;
-
-  // Choose shape based on hash mod
-  const shapeType = Math.abs(hash) % 3;
-  let shapePath = "";
-
-  // Center is 50,50. Radius 30.
-  if (shapeType === 0) { // Circle-ish
-    shapePath = `<circle cx="50" cy="50" r="30" stroke="white" stroke-width="1" fill="none" opacity="0.8" />
-                  <circle cx="50" cy="50" r="20" stroke="white" stroke-width="0.5" fill="none" opacity="0.5" />`;
-  } else if (shapeType === 1) { // Hexagon/Polygon
-    shapePath = `<path d="M50 20 L80 35 L80 65 L50 80 L20 65 L20 35 Z" stroke="white" stroke-width="1" fill="none" opacity="0.8" />
-                  <path d="M50 10 L85 30 L85 70 L50 90 L15 70 L15 30 Z" stroke="white" stroke-width="0.5" fill="none" opacity="0.3" />`;
-  } else { // Star/Diamond
-    shapePath = `<path d="M50 10 L60 40 L90 50 L60 60 L50 90 L40 60 L10 50 L40 40 Z" stroke="white" stroke-width="1" fill="none" opacity="0.8" />`;
-  }
-
-  const svg = `
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="background: linear-gradient(135deg, hsl(${hue}, 60%, 20%), hsl(${hue2}, 60%, 10%)); width: 100%; height: 100%;">
-    <!-- Procedural Pattern -->
-    <defs>
-      <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
-        <path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" stroke-width="0.1" opacity="0.1"/>
-      </pattern>
-    </defs>
-    <rect width="100" height="100" fill="url(#grid)" />
-    
-    <!-- Dynamic Shape -->
-    <g transform="translate(0, 0)">
-       ${shapePath}
-    </g>
-    
-    <!-- Text Overlay -->
-    <text x="50" y="95" font-family="monospace" font-size="4" fill="white" text-anchor="middle" opacity="0.5">UNK-${Math.abs(hash).toString(16).substring(0, 4).toUpperCase()}</text>
-  </svg>
-  `;
-
-  return `data:image/svg+xml;base64,${btoa(svg)}`;
-};
-
-export const generateSymbol = async (basePrompt: string, config?: SymbolConfig): Promise<GenerationResult> => {
-  const startTime = Date.now();
-
-  // 0. CHECK DEMO MODE (Happy Path Forcing)
-  if (DEMO_MODE) {
-    console.log("[SymbolService] DEMO_MODE active. Skipping network calls. Generating local SVG.");
-    // Simulate slight delay for "feeling"
-    await new Promise(r => setTimeout(r, 800));
-
-    return {
-      imageUrl: generateLocalSVG(basePrompt, config),
-      engineUsed: 'demo_local_svg',
-      durationMs: Date.now() - startTime
-    };
-  }
-
-  // 1. Attempt Instant Remote Generation (BaziEngine v2)
   try {
-    console.log(`[SymbolService] Requesting instant symbol from ${REMOTE_SYMBOL_ENDPOINT}...`);
-
-    const payload = {
-      prompt: basePrompt,
-      style: config?.influence || 'balanced',
-      mode: config?.transparentBackground ? 'transparent' : 'cinematic'
-    };
-
-    const response = await fetch(REMOTE_SYMBOL_ENDPOINT, {
+    const response = await fetch(getApiEndpoint(), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       },
       body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(5000)
+      signal: AbortSignal.timeout(30000) // 30s timeout for generation
     });
 
-    if (response.ok) {
-      const data = await response.json();
-      const imageUrl = data.imageUrl || data.imageDataUrl;
-      if (imageUrl) {
-        console.log("✅ Instant symbol received from remote engine.");
-        return {
-          imageUrl,
-          engineUsed: 'remote',
-          durationMs: Date.now() - startTime
-        };
-      }
-      console.warn("⚠️ Remote engine response missing imageUrl. Falling back to Proxy.", data);
-    } else {
-      console.warn(`⚠️ Remote engine returned ${response.status}. Switching to local Proxy.`);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const code = errorData?.error?.code || 'GENERATION_FAILED';
+      const message = errorData?.error?.message || `Server returned ${response.status}`;
+      const requestId = errorData?.request_id;
+      throw new SymbolGenerationError(code, message, requestId);
     }
-  } catch (error) {
-    console.warn("❌ Remote engine unreachable or timed out. Falling back to Proxy.", error);
-  }
 
-  // 2. Fallback: Local Proxy (calls Gemini server-side)
-  try {
-    console.log(`[SymbolService] Requesting symbol from Proxy (${LOCAL_PROXY_URL})...`);
+    const data = await response.json();
 
-    const payload = {
-      prompt: basePrompt,
-      style: config?.influence || 'balanced',
-      mode: config?.transparentBackground ? 'transparent' : 'cinematic'
+    if (!data.imageUrl && !data.imageDataUrl) {
+      throw new SymbolGenerationError(
+        'NO_IMAGE_DATA',
+        'Server response missing image data',
+        data.request_id
+      );
+    }
+
+    return {
+      imageUrl: data.imageUrl || data.imageDataUrl,
+      storagePath: data.storagePath || null,
+      engine: data.engine || 'gateway',
+      durationMs: data.durationMs,
+      requestId: data.request_id
     };
 
-    const response = await fetch(LOCAL_PROXY_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      if (data.imageDataUrl) {
-        console.log("✅ Symbol received from Proxy.");
-        return {
-          imageUrl: data.imageDataUrl,
-          engineUsed: 'proxy',
-          durationMs: Date.now() - startTime
-        };
-      }
-      console.warn("⚠️ Proxy response missing imageDataUrl. Switching to local SVG.", data);
-    } else {
-      console.warn(`⚠️ Proxy returned ${response.status}. Switching to local SVG.`);
+  } catch (error) {
+    if (error instanceof SymbolGenerationError) {
+      throw error;
     }
 
-  } catch (error) {
-    console.error("❌ Proxy error:", error);
-  }
+    if (error instanceof Error) {
+      if (error.name === 'TimeoutError') {
+        throw new SymbolGenerationError('TIMEOUT', 'Symbol generation timed out');
+      }
+      throw new SymbolGenerationError('NETWORK_ERROR', error.message);
+    }
 
-  // 3. Final Fallback: Local SVG (Determinism)
-  // Instead of generic placeholder image that requires network (picsum), use local generator
-  console.warn("⚠️ All network engines failed. Generating local fallback symbol.");
-  return {
-    imageUrl: generateLocalSVG(basePrompt, config), // Now using local SVG instead of picsum
-    engineUsed: 'demo_local_svg', // Treat as same fallback class
-    durationMs: Date.now() - startTime,
-    error: 'All engines failed, fallback engaged'
-  };
+    throw new SymbolGenerationError('UNKNOWN_ERROR', 'An unexpected error occurred');
+  }
 };

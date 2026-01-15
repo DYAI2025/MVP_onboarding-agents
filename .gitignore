@@ -22,3 +22,16 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+.env
+.env.*
+!.env.example
+.fly
+hallpass
+.gemini
+.mcp.json
+.claude
+.claude-flow
+.swarm
+*.zip
+MVP_onboarding-agents-main*
+
