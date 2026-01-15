@@ -25,23 +25,28 @@ router.post('/', async (req: Request, res: Response) => {
 
         // Create a secure conversation ID
         const conversation_id = uuidv4();
-        const supabase = getSupabaseAdmin();
 
-        // Log the conversation start (Mockup-Free: Real persistence)
-        const { error } = await supabase.from('conversations').insert({
-            id: conversation_id,
-            user_id,
-            chart_id,
-            agent_id: agent_id || 'unknown',
-            status: 'started',
-            metadata: {
-                started_at: new Date().toISOString()
+        try {
+            const supabase = getSupabaseAdmin();
+
+            // Log the conversation start (Mockup-Free: Real persistence)
+            const { error } = await supabase.from('conversations').insert({
+                id: conversation_id,
+                user_id,
+                chart_id,
+                agent_id: agent_id || 'unknown',
+                status: 'started',
+                metadata: {
+                    started_at: new Date().toISOString()
+                }
+            });
+
+            if (error) {
+                console.error('Failed to create conversation record:', error);
+                // We proceed anyway to not block the user, but log it as critical observability event
             }
-        });
-
-        if (error) {
-            console.error('Failed to create conversation record:', error);
-            // We proceed anyway to not block the user, but log it as critical observability event
+        } catch (adminError: any) {
+            console.warn('Supabase Admin requested but not available. Logging to DB skipped.', adminError.message);
         }
 
         // Generate the Session Token for the Agent

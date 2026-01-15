@@ -10,6 +10,12 @@ export interface JourneyState {
 }
 
 export const loadState = async (): Promise<JourneyState | null> => {
+    // Prevent crashes if Supabase is not configured
+    if (!supabase.auth || !import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL.includes('replace-with')) {
+        console.warn('Supabase not configured, skipping cloud state load.');
+        return null;
+    }
+
     try {
         const { data: { user } } = await supabase.auth.getUser();
 
