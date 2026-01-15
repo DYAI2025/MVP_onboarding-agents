@@ -104,6 +104,8 @@ const getPlanetPosition = (date: Date, planet: string) => {
   return {
     sign: ZODIAC_SIGNS[signIndex % 12] || 'Aries',
     degree: Number.isNaN(degree) ? 0 : degree,
+    // NOTE: This retrograde flag is a simplified MVP placeholder based on an arbitrary sine threshold.
+    // For production use, replace with proper ephemeris-based retrograde calculations.
     isRetro
   };
 };
