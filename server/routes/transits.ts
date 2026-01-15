@@ -126,14 +126,47 @@ const calculateLocalTransits = (date: Date) => {
   ];
 };
 
+const ISO_DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+
 router.get('/', (req: Request, res: Response) => {
   const dateParam = typeof req.query.date === 'string' ? req.query.date : '';
-  const date = dateParam ? new Date(dateParam) : new Date();
 
-  if (Number.isNaN(date.getTime())) {
-    const error = new GatewayError('INVALID_DATE', 'Invalid date query parameter', 400);
-    res.status(error.statusCode).json(formatErrorResponse(error, req.id));
-    return;
+  let date: Date;
+
+  if (dateParam) {
+    // Require an explicit, predictable format (YYYY-MM-DD) and normalize to UTC
+    if (!ISO_DATE_REGEX.test(dateParam)) {
+      const error = new GatewayError(
+        'INVALID_DATE',
+        'Invalid date query parameter format. Expected YYYY-MM-DD.',
+        400
+      );
+      res.status(error.statusCode).json(formatErrorResponse(error, req.id));
+      return;
+    }
+
+    const [yearStr, monthStr, dayStr] = dateParam.split('-');
+    const year = Number(yearStr);
+    const month = Number(monthStr);
+    const day = Number(dayStr);
+
+    const utcTime = Date.UTC(year, month - 1, day);
+    date = new Date(utcTime);
+
+    // Validate that the parsed date matches the input to avoid rollover (e.g. 2024-13-40)
+    if (
+      Number.isNaN(date.getTime()) ||
+      date.getUTCFullYear() !== year ||
+      date.getUTCMonth() !== month - 1 ||
+      date.getUTCDate() !== day
+    ) {
+      const error = new GatewayError('INVALID_DATE', 'Invalid date query parameter', 400);
+      res.status(error.statusCode).json(formatErrorResponse(error, req.id));
+      return;
+    }
+  } else {
+    // Default to current time as an explicit UTC instant rather than relying on locale-dependent parsing
+    date = new Date();
   }
 
   const transits = calculateLocalTransits(date);
