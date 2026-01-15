@@ -11,6 +11,7 @@ import analysisRouter from './routes/analysis';
 import agentSessionRouter from './routes/agentSession';
 import agentToolsRouter from './routes/agentTools';
 import elevenLabsWebhookRouter from './routes/elevenLabsWebhook';
+import transitsRouter from './routes/transits';
 
 dotenv.config();
 
@@ -143,6 +144,7 @@ app.use('/api/analysis', analysisRouter);
 app.use('/api/agent/session', agentSessionRouter);
 app.use('/api/agent/tools', agentToolsRouter);
 app.use('/api/webhooks/elevenlabs', elevenLabsWebhookRouter);
+app.use('/api/transits', transitsRouter);
 
 // --- STATIC FILE SERVING (Production) ---
 // In production, serve the built frontend from the dist folder
