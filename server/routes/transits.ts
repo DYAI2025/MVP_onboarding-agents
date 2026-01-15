@@ -53,6 +53,8 @@ const getSunPosition = (date: Date) => {
   const start = new Date(year, 0, 0);
   const diff = date.getTime() - start.getTime();
   const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
+  // 80 ≈ day-of-year of the (mean) vernal equinox (around March 21), used as the zero point for Aries.
+  // 0.9856 ≈ mean daily motion of the Sun in ecliptic longitude (degrees per day: ~360 / 365.24).
   let degrees = (dayOfYear - 80) * 0.9856;
   if (degrees < 0) degrees += 360;
   const signIndex = Math.floor(degrees / 30);
