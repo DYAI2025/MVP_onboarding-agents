@@ -1,5 +1,6 @@
 
 import { BirthData, FusionResult, WesternAnalysis, EasternAnalysis } from '../types';
+import { supabase } from './supabaseClient';
 
 // --- Western Zodiac Data ---
 
@@ -295,67 +296,57 @@ import { REMOTE_ANALYSIS_ENDPOINT } from '../src/config';
 // --- Remote Analysis Logic ---
 
 const fetchRemoteAnalysis = async (data: BirthData): Promise<FusionResult> => {
+  // Get current user_id from Supabase session
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error('No active session. Please refresh and try again.');
+  }
+
   const payload = {
+    user_id: user.id,
     birth: {
       date: data.date,
       time: data.time,
+      tz: data.tz,
       lat: data.lat,
-      lon: data.long,
-      place: data.location
+      lon: data.lon,
+      place: data.place
     }
   };
 
-  console.log(`[AstroPhysics] Requesting remote analysis from ${REMOTE_ANALYSIS_ENDPOINT}...`, payload);
+  console.log('[astroPhysics] Sending analysis request:', payload);
 
-  try {
-    const response = await fetch(REMOTE_ANALYSIS_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(8000) // 8s timeout
-    });
+  const response = await fetch(REMOTE_ANALYSIS_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
 
-    if (!response.ok) {
-      // Parse error response from Gateway
-      let errorMessage = `Analysis service returned ${response.status}`;
-      try {
-        const errorData = await response.json();
-        errorMessage = errorData.error?.message || errorMessage;
-      } catch {
-        // If error response is not JSON, use status text
-        errorMessage = response.statusText || errorMessage;
-      }
-      throw new Error(`Analysis failed: ${errorMessage}`);
-    }
-
-    const result = await response.json();
-    console.log("✅ Remote analysis received:", result);
-
-    // Handle the nested structure from Gateway ({ chart_id, analysis: {...} })
-    const analysisData = result.analysis || result;
-
-    if (!analysisData.synthesisTitle || !analysisData.western || !analysisData.eastern) {
-      throw new Error('Invalid analysis response: missing required fields');
-    }
-
-    return {
-      ...analysisData,
-      chartId: result.chart_id
-    } as FusionResult;
-
-  } catch (error) {
-    // Re-throw with more context
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        throw new Error('Analysis service timeout (8s). Please try again.');
-      }
-      throw error; // Preserve original error message
-    }
-    throw new Error('Analysis service unavailable. Please try again later.');
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      errorData.message || `Analysis API returned ${response.status}: ${response.statusText}`
+    );
   }
+
+  const result = await response.json();
+
+  // Validate response contains chart_id
+  if (!result.chart_id) {
+    throw new Error('Analysis response missing chart_id');
+  }
+
+  console.log('[astroPhysics] Analysis complete, chart_id:', result.chart_id);
+
+  return {
+    chartId: result.chart_id, // ✅ Map to FusionResult.chartId
+    synthesisTitle: result.synthesis_title || result.synthesisTitle,
+    synthesisDescription: result.synthesis_description || result.synthesisDescription,
+    elementMatrix: result.element_matrix || result.elementMatrix,
+    western: result.western,
+    eastern: result.eastern,
+    prompt: result.prompt
+  };
 };
 
 export const runFusionAnalysis = async (data: BirthData): Promise<FusionResult> => {

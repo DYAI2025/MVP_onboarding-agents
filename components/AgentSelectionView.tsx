@@ -2,6 +2,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { FusionResult } from '../types';
 import { SmartImage } from './SmartImage';
+import { ErrorCard } from './ErrorCard';
 import { getAgentConfig, isAgentConfigured } from '../services/elevenLabsAgents';
 
 // NOTE: Global JSX declaration removed to prevent IntrinsicElements conflict.
@@ -15,23 +16,30 @@ interface Props {
 }
 
 export const AgentSelectionView: React.FC<Props> = ({ result, symbolUrl, onAgentSelect, onBackToDashboard }) => {
-  // Fallback UI only if result is missing (symbolUrl is now optional)
+  // STEP 1.6: Early validation - no result at all
   if (!result) {
     return (
       <div className="min-h-screen bg-[#0F1014] flex items-center justify-center p-6">
-        <div className="text-center max-w-md">
-          <div className="text-6xl mb-6">&#x2728;</div>
-          <h2 className="font-serif text-3xl text-white mb-4">Daten werden geladen...</h2>
-          <p className="text-gray-400 mb-8 leading-relaxed">
-            Falls diese Ansicht bestehen bleibt, starte den Onboarding-Prozess bitte neu.
-          </p>
-          <button
-            onClick={() => window.location.href = '/'}
-            className="px-8 py-4 bg-gradient-to-r from-astro-gold to-[#B89628] text-white font-serif italic text-lg rounded-2xl shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all"
-          >
-            Zurück zum Start
-          </button>
-        </div>
+        <ErrorCard
+          title="Analysis Required"
+          message="Please complete the personality analysis before selecting an agent."
+          actionLabel="Start Analysis"
+          onAction={() => window.location.href = '/'}
+        />
+      </div>
+    );
+  }
+
+  // STEP 1.6: Early validation - missing chartId (FAIL LOUD)
+  if (!result.chartId) {
+    return (
+      <div className="min-h-screen bg-[#0F1014] flex items-center justify-center p-6">
+        <ErrorCard
+          title="Analysis Incomplete"
+          message="Your analysis did not complete successfully. The system requires a valid chart ID to continue. Please restart the analysis process."
+          actionLabel="Restart Analysis"
+          onAction={() => window.location.href = '/'}
+        />
       </div>
     );
   }

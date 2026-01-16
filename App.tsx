@@ -15,6 +15,7 @@ import { runFusionAnalysis } from './services/astroPhysics';
 import { generateSymbol, SymbolConfig, GenerationResult } from './services/geminiService';
 import { fetchCurrentTransits, fetchTransitsForDate } from './services/transitService';
 import { loadState, saveState, clearState } from './services/persistence';
+import { supabase } from './services/supabaseClient';
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
 
 type ViewType = 'dashboard' | 'quizzes' | 'character_dashboard' | 'agent_selection' | 'matrix';
@@ -192,6 +193,26 @@ function AppContent() {
     setLoadingTransits(true);
 
     try {
+      // STEP 1.3: Ensure Supabase session exists before analysis
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        // Sign in anonymously if no session
+        console.log('[App] No active session, creating anonymous session...');
+        const { data: anonData, error: anonError } = await supabase.auth.signInAnonymously();
+
+        if (anonError || !anonData.user) {
+          setAnalysisError('Failed to create session. Please refresh and try again.');
+          setAstroState(CalculationState.ERROR);
+          setLoadingTransits(false);
+          return;
+        }
+
+        console.log('[App] Created anonymous session:', anonData.user.id);
+      } else {
+        console.log('[App] Using existing session:', user.id);
+      }
+
       const dateObj = new Date(data.date + 'T' + data.time);
 
       // Run analysis (critical path)
