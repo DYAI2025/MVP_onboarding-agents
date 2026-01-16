@@ -294,20 +294,20 @@ import { REMOTE_ANALYSIS_ENDPOINT } from '../src/config';
 
 // --- Remote Analysis Logic ---
 
-const fetchRemoteAnalysis = async (data: BirthData): Promise<FusionResult | null> => {
+const fetchRemoteAnalysis = async (data: BirthData): Promise<FusionResult> => {
+  const payload = {
+    birth: {
+      date: data.date,
+      time: data.time,
+      lat: data.lat,
+      lon: data.long,
+      place: data.location
+    }
+  };
+
+  console.log(`[AstroPhysics] Requesting remote analysis from ${REMOTE_ANALYSIS_ENDPOINT}...`, payload);
+
   try {
-    const payload = {
-      birth: {
-        date: data.date,
-        time: data.time,
-        lat: data.lat,
-        lon: data.long,
-        place: data.location
-      }
-    };
-
-    console.log(`[AstroPhysics] Requesting remote analysis from ${REMOTE_ANALYSIS_ENDPOINT}...`, payload);
-
     const response = await fetch(REMOTE_ANALYSIS_ENDPOINT, {
       method: 'POST',
       headers: {
@@ -318,59 +318,48 @@ const fetchRemoteAnalysis = async (data: BirthData): Promise<FusionResult | null
       signal: AbortSignal.timeout(8000) // 8s timeout
     });
 
-    if (response.ok) {
-      const result = await response.json();
-      console.log("✅ Remote analysis received:", result);
-
-      // Handle the nested structure from Gateway ({ chart_id, analysis: {...} })
-      const analysisData = result.analysis || result;
-
-      if (analysisData.synthesisTitle && analysisData.western && analysisData.eastern) {
-        return {
-          ...analysisData,
-          chartId: result.chart_id
-        } as FusionResult;
+    if (!response.ok) {
+      // Parse error response from Gateway
+      let errorMessage = `Analysis service returned ${response.status}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error?.message || errorMessage;
+      } catch {
+        // If error response is not JSON, use status text
+        errorMessage = response.statusText || errorMessage;
       }
-    } else {
-      console.warn(`⚠️ Remote analysis returned ${response.status}. Falling back to local.`);
+      throw new Error(`Analysis failed: ${errorMessage}`);
     }
+
+    const result = await response.json();
+    console.log("✅ Remote analysis received:", result);
+
+    // Handle the nested structure from Gateway ({ chart_id, analysis: {...} })
+    const analysisData = result.analysis || result;
+
+    if (!analysisData.synthesisTitle || !analysisData.western || !analysisData.eastern) {
+      throw new Error('Invalid analysis response: missing required fields');
+    }
+
+    return {
+      ...analysisData,
+      chartId: result.chart_id
+    } as FusionResult;
+
   } catch (error) {
-    console.warn("❌ Remote analysis failed or timed out.", error);
+    // Re-throw with more context
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        throw new Error('Analysis service timeout (8s). Please try again.');
+      }
+      throw error; // Preserve original error message
+    }
+    throw new Error('Analysis service unavailable. Please try again later.');
   }
-  return null;
 };
 
 export const runFusionAnalysis = async (data: BirthData): Promise<FusionResult> => {
-  const dateObj = new Date(data.date + 'T' + data.time);
-
-  // 1. Try Remote Analysis first
-  const remoteResult = await fetchRemoteAnalysis(data);
-  if (remoteResult) {
-    return remoteResult;
-  }
-
-  // 2. Fallback to Local Calculation
-  console.log("Using local fusion engine fallback.");
-
-  let western: WesternAnalysis;
-  let eastern: EasternAnalysis;
-
-  try {
-    const local = calculateLocalAnalysis(dateObj);
-    western = local.western;
-    eastern = local.eastern;
-  } catch (e) {
-    throw new Error("Local calculation failed");
-  }
-
-  const { synthesisTitle, synthesisDescription, prompt } = synthesizeIdentity(western, eastern);
-
-  return {
-    synthesisTitle,
-    synthesisDescription,
-    elementMatrix: `${western.element} (Sun) / ${eastern.dayElement} (Day Master)`,
-    western,
-    eastern,
-    prompt
-  };
+  // Production-ready: No local fallback, fail loud on errors
+  // This ensures users get clear error messages instead of degraded service
+  return await fetchRemoteAnalysis(data);
 };
