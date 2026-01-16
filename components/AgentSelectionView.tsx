@@ -136,9 +136,11 @@ export const AgentSelectionView: React.FC<Props> = ({ result, symbolUrl, onAgent
           const widget = document.createElement('elevenlabs-convai');
           widget.setAttribute('agent-id', agentConfig.elevenLabsId);
 
-          // Inject secure context
+          // Inject secure context with conversation_id and chart_id
           const dynamicVars = {
             session_token: token,
+            conversation_id: sessionData.conversation_id, // ✅ Pass to widget for webhook mapping
+            chart_id: result.chartId, // ✅ Pass chart_id for context
             user_name: "Seeker", // Make dynamic if possible
             chart_context: result?.synthesisTitle || "Unknown"
           };
