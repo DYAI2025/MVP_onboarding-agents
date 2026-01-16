@@ -2,12 +2,14 @@
 import React, { useMemo, useState, useRef } from 'react';
 import { Transit } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
+import { ErrorCard } from './ErrorCard';
 
 interface Props {
   transits: Transit[];
   isLoading: boolean;
   title?: string;
-  displayDate?: Date; // New prop to control the displayed date
+  displayDate?: Date;
+  error?: string | null; // Error message to display if transit fetch failed
 }
 
 interface AugmentedTransit extends Transit {
@@ -89,7 +91,7 @@ const BODY_STYLES: Record<string, any> = {
 
 const ZODIAC_ORDER = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
 
-export const CosmicWeather: React.FC<Props> = ({ transits, isLoading, title, displayDate }) => {
+export const CosmicWeather: React.FC<Props> = ({ transits, isLoading, title, displayDate, error }) => {
   const { t, language } = useLanguage();
   
   // Use the passed displayDate or fallback to now
@@ -221,7 +223,23 @@ export const CosmicWeather: React.FC<Props> = ({ transits, isLoading, title, dis
   };
 
   if (isLoading) {
+      // Show error state if transit fetch failed
+  if (error) {
     return (
+      <div className="bg-astro-card border border-astro-border rounded-[3rem] p-8 md:p-12 space-y-8">
+        <h2 className="font-serif text-3xl md:text-4xl text-astro-gold text-center">
+          {title || t.weather.title}
+        </h2>
+        <ErrorCard
+          title="Cosmic Weather Unavailable"
+          message={error}
+          severity="warning"
+        />
+      </div>
+    );
+  }
+
+  return (
       <div className="bg-[#0B1221] border border-white/5 rounded-[3rem] p-12 overflow-hidden h-[700px] flex flex-col animate-pulse relative">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_#161E2E_0%,_#0B1221_100%)] opacity-50"></div>
         <div className="relative z-10 flex justify-between items-start mb-12">
