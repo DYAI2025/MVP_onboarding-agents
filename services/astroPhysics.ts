@@ -324,9 +324,12 @@ const fetchRemoteAnalysis = async (data: BirthData): Promise<FusionResult> => {
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(
-      errorData.message || `Analysis API returned ${response.status}: ${response.statusText}`
-    );
+    const message =
+      (errorData as any)?.error?.message ||
+      (errorData as any)?.message ||
+      `Analysis API returned ${response.status}: ${response.statusText}`;
+
+    throw new Error(message);
   }
 
   const result = await response.json();
