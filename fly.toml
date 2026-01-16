@@ -1,6 +1,6 @@
 # fly.toml app configuration file for Fly.io
 
-app = 'bazodiac'
+app = 'mvp-onboarding-agents'
 primary_region = 'fra'
 
 [build]
