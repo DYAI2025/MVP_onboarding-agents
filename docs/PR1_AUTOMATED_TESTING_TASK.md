@@ -19,7 +19,7 @@ Automatisierte End-to-End Tests für PR1 (Schema-Fixes & Persistence) über **An
 ## Test-Suite: PR1 Validation
 
 ### Test 1: SQL Schema Validation
-**Ziel**: Verifiziere dass alle Migrationen korrekt angewendet wurden.
+**Ziel**: Verifiziere, dass alle Migrationen korrekt angewendet wurden.
 
 #### Schritte:
 1. Verbinde zu Supabase (via `SUPABASE_URL` und `SUPABASE_SERVICE_ROLE_KEY` aus `.env`)
