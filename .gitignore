@@ -35,3 +35,8 @@ hallpass
 *.zip
 MVP_onboarding-agents-main*
 
+
+# Development backups
+*.backup
+*.backup-*
+PRIORITY_1_SUMMARY.md

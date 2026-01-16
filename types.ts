@@ -1,10 +1,11 @@
 
 export interface BirthData {
-  date: string;
-  time: string;
-  location: string;
-  lat?: number;
-  long?: number;
+  date: string;      // YYYY-MM-DD
+  time: string;      // HH:mm
+  place: string;     // City name (for display only)
+  lat: number;       // Latitude (required)
+  lon: number;       // Longitude (required)
+  tz: string;        // Timezone (IANA format, e.g. "Europe/Berlin")
 }
 
 export interface WesternAnalysis {

@@ -9,7 +9,7 @@
     "dev:server": "tsx server/server.ts",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "bash -c 'source scripts/ensure-swisseph.sh && vitest'",
+    "test": "bash -c 'source scripts/ensure-swisseph.sh && npx vitest run'",
     "start": "tsx server/server.ts"
   },
   "dependencies": {
