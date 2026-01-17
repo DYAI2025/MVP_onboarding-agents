@@ -2,6 +2,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { FusionResult } from '../types';
 import { SmartImage } from './SmartImage';
+import { ErrorCard } from './ErrorCard';
 import { getAgentConfig, isAgentConfigured } from '../services/elevenLabsAgents';
 
 // NOTE: Global JSX declaration removed to prevent IntrinsicElements conflict.
@@ -15,23 +16,30 @@ interface Props {
 }
 
 export const AgentSelectionView: React.FC<Props> = ({ result, symbolUrl, onAgentSelect, onBackToDashboard }) => {
-  // Fallback UI only if result is missing (symbolUrl is now optional)
+  // STEP 1.6: Early validation - no result at all
   if (!result) {
     return (
       <div className="min-h-screen bg-[#0F1014] flex items-center justify-center p-6">
-        <div className="text-center max-w-md">
-          <div className="text-6xl mb-6">&#x2728;</div>
-          <h2 className="font-serif text-3xl text-white mb-4">Daten werden geladen...</h2>
-          <p className="text-gray-400 mb-8 leading-relaxed">
-            Falls diese Ansicht bestehen bleibt, starte den Onboarding-Prozess bitte neu.
-          </p>
-          <button
-            onClick={() => window.location.href = '/'}
-            className="px-8 py-4 bg-gradient-to-r from-astro-gold to-[#B89628] text-white font-serif italic text-lg rounded-2xl shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all"
-          >
-            Zurück zum Start
-          </button>
-        </div>
+        <ErrorCard
+          title="Analysis Required"
+          message="Please complete the personality analysis before selecting an agent."
+          actionLabel="Start Analysis"
+          onAction={() => window.location.href = '/'}
+        />
+      </div>
+    );
+  }
+
+  // STEP 1.6: Early validation - missing chartId (FAIL LOUD)
+  if (!result.chartId) {
+    return (
+      <div className="min-h-screen bg-[#0F1014] flex items-center justify-center p-6">
+        <ErrorCard
+          title="Analysis Incomplete"
+          message="Your analysis did not complete successfully. The system requires a valid chart ID to continue. Please restart the analysis process."
+          actionLabel="Restart Analysis"
+          onAction={() => window.location.href = '/'}
+        />
       </div>
     );
   }
@@ -52,6 +60,14 @@ export const AgentSelectionView: React.FC<Props> = ({ result, symbolUrl, onAgent
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [initStatus, setInitStatus] = useState<'idle' | 'securing' | 'ready' | 'error'>('idle');
 
+  // Error State for missing data
+  const [validationError, setValidationError] = useState<{
+    title: string;
+    message: string;
+    actionLabel?: string;
+    onAction?: () => void;
+  } | null>(null);
+
   // Effect: Secure Session & Widget Init
   useEffect(() => {
     if (!selectedAgent || !isChatActive || !widgetContainerRef.current) return;
@@ -67,13 +83,30 @@ export const AgentSelectionView: React.FC<Props> = ({ result, symbolUrl, onAgent
         const authToken = session?.access_token;
         const userId = session?.user?.id;
 
-        if (!authToken || !userId) {
-          console.warn("No auth session found for agent uplink.");
-          // Fallback or error? For MVP, we might fail or try anon.
-          // Assuming persistence.ts ensured anon login.
+        // 2. Validate required data - NO FALLBACKS!
+        if (!result?.chartId) {
+          setValidationError({
+            title: 'Quiz Required',
+            message: 'Please complete the personality quiz before starting a conversation with your astrology agent.',
+            actionLabel: 'Go to Quiz',
+            onAction: () => window.location.href = '/'
+          });
+          setInitStatus('error');
+          return;
         }
 
-        // 2. Request Agent Session
+        if (!userId) {
+          setValidationError({
+            title: 'Authentication Required',
+            message: 'Please log in to start a conversation. We need to authenticate you to provide a personalized experience.',
+            actionLabel: 'Refresh Page',
+            onAction: () => window.location.reload()
+          });
+          setInitStatus('error');
+          return;
+        }
+
+        // 3. Request Agent Session with validated data
         const response = await fetch('/api/agent/session', {
           method: 'POST',
           headers: {
@@ -81,9 +114,9 @@ export const AgentSelectionView: React.FC<Props> = ({ result, symbolUrl, onAgent
             // 'Authorization': `Bearer ${authToken}` // Enable if gateway checks this
           },
           body: JSON.stringify({
-            chart_id: result?.chartId || 'unknown-chart-id',
+            chart_id: result.chartId,  // No fallback - validated above
             agent_id: selectedAgent,
-            user_id: userId || 'anon-user'
+            user_id: userId  // No fallback - validated above
           })
         });
 
@@ -103,9 +136,11 @@ export const AgentSelectionView: React.FC<Props> = ({ result, symbolUrl, onAgent
           const widget = document.createElement('elevenlabs-convai');
           widget.setAttribute('agent-id', agentConfig.elevenLabsId);
 
-          // Inject secure context
+          // Inject secure context with conversation_id and chart_id
           const dynamicVars = {
             session_token: token,
+            conversation_id: sessionData.conversation_id, // ✅ Pass to widget for webhook mapping
+            chart_id: result.chartId, // ✅ Pass chart_id for context
             user_name: "Seeker", // Make dynamic if possible
             chart_context: result?.synthesisTitle || "Unknown"
           };
@@ -224,6 +259,35 @@ export const AgentSelectionView: React.FC<Props> = ({ result, symbolUrl, onAgent
                   Zum Dashboard fortfahren <span className="not-italic">→</span>
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- VALIDATION ERROR OVERLAY --- */}
+      {validationError && (
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-xl flex items-center justify-center p-4 animate-fade-in">
+          <div className="max-w-md w-full bg-[#0F1014] border border-red-500/30 rounded-3xl shadow-[0_0_100px_rgba(239,68,68,0.2)] p-8">
+            <div className="text-center">
+              <div className="text-6xl mb-6">⚠️</div>
+              <h2 className="font-serif text-3xl text-white mb-4">{validationError.title}</h2>
+              <p className="text-gray-400 mb-8 leading-relaxed">
+                {validationError.message}
+              </p>
+              {validationError.actionLabel && validationError.onAction && (
+                <button
+                  onClick={validationError.onAction}
+                  className="w-full px-8 py-4 bg-gradient-to-r from-red-600 to-red-700 text-white font-serif italic text-lg rounded-2xl shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all mb-4"
+                >
+                  {validationError.actionLabel}
+                </button>
+              )}
+              <button
+                onClick={() => setValidationError(null)}
+                className="w-full px-8 py-4 bg-white/5 border border-white/10 text-gray-400 font-serif text-lg rounded-2xl hover:bg-white/10 transition-all"
+              >
+                Dismiss
+              </button>
             </div>
           </div>
         </div>

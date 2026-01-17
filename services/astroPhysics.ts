@@ -1,5 +1,6 @@
 
 import { BirthData, FusionResult, WesternAnalysis, EasternAnalysis } from '../types';
+import { supabase } from './supabaseClient';
 
 // --- Western Zodiac Data ---
 
@@ -294,83 +295,65 @@ import { REMOTE_ANALYSIS_ENDPOINT } from '../src/config';
 
 // --- Remote Analysis Logic ---
 
-const fetchRemoteAnalysis = async (data: BirthData): Promise<FusionResult | null> => {
-  try {
-    const payload = {
-      birth: {
-        date: data.date,
-        time: data.time,
-        lat: data.lat,
-        lon: data.long,
-        place: data.location
-      }
-    };
-
-    console.log(`[AstroPhysics] Requesting remote analysis from ${REMOTE_ANALYSIS_ENDPOINT}...`, payload);
-
-    const response = await fetch(REMOTE_ANALYSIS_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(8000) // 8s timeout
-    });
-
-    if (response.ok) {
-      const result = await response.json();
-      console.log("✅ Remote analysis received:", result);
-
-      // Handle the nested structure from Gateway ({ chart_id, analysis: {...} })
-      const analysisData = result.analysis || result;
-
-      if (analysisData.synthesisTitle && analysisData.western && analysisData.eastern) {
-        return {
-          ...analysisData,
-          chartId: result.chart_id
-        } as FusionResult;
-      }
-    } else {
-      console.warn(`⚠️ Remote analysis returned ${response.status}. Falling back to local.`);
-    }
-  } catch (error) {
-    console.warn("❌ Remote analysis failed or timed out.", error);
+const fetchRemoteAnalysis = async (data: BirthData): Promise<FusionResult> => {
+  // Get current user_id from Supabase session
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error('No active session. Please refresh and try again.');
   }
-  return null;
+
+  const payload = {
+    user_id: user.id,
+    birth: {
+      date: data.date,
+      time: data.time,
+      tz: data.tz,
+      lat: data.lat,
+      lon: data.lon,
+      place: data.place
+    }
+  };
+
+  console.log('[astroPhysics] Sending analysis request:', payload);
+
+  const response = await fetch(REMOTE_ANALYSIS_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    const message =
+      (errorData as any)?.error?.message ||
+      (errorData as any)?.message ||
+      `Analysis API returned ${response.status}: ${response.statusText}`;
+
+    throw new Error(message);
+  }
+
+  const result = await response.json();
+
+  // Validate response contains chart_id
+  if (!result.chart_id) {
+    throw new Error('Analysis response missing chart_id');
+  }
+
+  console.log('[astroPhysics] Analysis complete, chart_id:', result.chart_id);
+
+  return {
+    chartId: result.chart_id, // ✅ Map to FusionResult.chartId
+    synthesisTitle: result.synthesis_title || result.synthesisTitle,
+    synthesisDescription: result.synthesis_description || result.synthesisDescription,
+    elementMatrix: result.element_matrix || result.elementMatrix,
+    western: result.western,
+    eastern: result.eastern,
+    prompt: result.prompt
+  };
 };
 
 export const runFusionAnalysis = async (data: BirthData): Promise<FusionResult> => {
-  const dateObj = new Date(data.date + 'T' + data.time);
-
-  // 1. Try Remote Analysis first
-  const remoteResult = await fetchRemoteAnalysis(data);
-  if (remoteResult) {
-    return remoteResult;
-  }
-
-  // 2. Fallback to Local Calculation
-  console.log("Using local fusion engine fallback.");
-
-  let western: WesternAnalysis;
-  let eastern: EasternAnalysis;
-
-  try {
-    const local = calculateLocalAnalysis(dateObj);
-    western = local.western;
-    eastern = local.eastern;
-  } catch (e) {
-    throw new Error("Local calculation failed");
-  }
-
-  const { synthesisTitle, synthesisDescription, prompt } = synthesizeIdentity(western, eastern);
-
-  return {
-    synthesisTitle,
-    synthesisDescription,
-    elementMatrix: `${western.element} (Sun) / ${eastern.dayElement} (Day Master)`,
-    western,
-    eastern,
-    prompt
-  };
+  // Production-ready: No local fallback, fail loud on errors
+  // This ensures users get clear error messages instead of degraded service
+  return await fetchRemoteAnalysis(data);
 };

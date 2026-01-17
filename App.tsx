@@ -9,13 +9,14 @@ import { CharacterDashboard } from './components/CharacterDashboard';
 import { CosmicWeather } from './components/CosmicWeather';
 import { AgentSelectionView } from './components/AgentSelectionView';
 import { MatrixDocsView } from './components/MatrixDocsView';
+import { ErrorCard } from './components/ErrorCard';
 import { BirthData, CalculationState, FusionResult, Transit } from './types';
 import { runFusionAnalysis } from './services/astroPhysics';
 import { generateSymbol, SymbolConfig, GenerationResult } from './services/geminiService';
 import { fetchCurrentTransits, fetchTransitsForDate } from './services/transitService';
 import { loadState, saveState, clearState } from './services/persistence';
+import { supabase } from './services/supabaseClient';
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
-import { DEMO_MODE, FORCE_HAPPY_PATH } from './src/config';
 
 type ViewType = 'dashboard' | 'quizzes' | 'character_dashboard' | 'agent_selection' | 'matrix';
 
@@ -60,6 +61,8 @@ function AppContent() {
   // State
   const [astroState, setAstroState] = useState<CalculationState>(CalculationState.IDLE);
   const [analysisResult, setAnalysisResult] = useState<FusionResult | null>(null);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [transitError, setTransitError] = useState<string | null>(null);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
   const [generationStats, setGenerationStats] = useState<GenerationStats | null>(null);
@@ -129,12 +132,15 @@ function AppContent() {
   useEffect(() => {
     const loadTransits = async () => {
       setLoadingTransits(true);
+      setTransitError(null);
       try {
         const data = await fetchCurrentTransits();
         if (data && data.length > 0) setTransits(data);
         setTransitDate(new Date());
       } catch (e) {
-        console.error("Failed to load transits", e);
+        const errorMsg = e instanceof Error ? e.message : 'Failed to load Cosmic Weather';
+        setTransitError(errorMsg);
+        console.error('[App] Transit loading failed:', e);
       } finally {
         setLoadingTransits(false);
       }
@@ -180,36 +186,68 @@ function AppContent() {
   const handleValidation = async (data: BirthData) => {
     if (!data.date || !data.time) return;
     setAstroState(CalculationState.CALCULATING);
+    setAnalysisError(null); // Clear previous errors
+    setTransitError(null); // Clear previous transit errors
     setGeneratedImage(null);
     setGenerationStats(null);
     setLoadingTransits(true);
+
     try {
-      const dateObj = new Date(data.date + 'T' + data.time);
-      const [result, birthTransits] = await Promise.all([
-        runFusionAnalysis(data),
-        fetchTransitsForDate(dateObj)
-      ]);
-      setAnalysisResult(result);
-      if (birthTransits && birthTransits.length > 0) {
-        setTransits(birthTransits);
-        setTransitDate(dateObj);
+      // STEP 1.3: Ensure Supabase session exists before analysis
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        // Sign in anonymously if no session
+        console.log('[App] No active session, creating anonymous session...');
+        const { data: anonData, error: anonError } = await supabase.auth.signInAnonymously();
+
+        if (anonError || !anonData.user) {
+          setAnalysisError('Failed to create session. Please refresh and try again.');
+          setAstroState(CalculationState.ERROR);
+          setLoadingTransits(false);
+          return;
+        }
+
+        console.log('[App] Created anonymous session:', anonData.user.id);
+      } else {
+        console.log('[App] Using existing session:', user.id);
       }
+
+      const dateObj = new Date(data.date + 'T' + data.time);
+
+      // Run analysis (critical path)
+      const result = await runFusionAnalysis(data);
+      setAnalysisResult(result);
       setAstroState(CalculationState.COMPLETE);
+
+      // Fetch transits separately (non-critical, can fail without blocking analysis)
+      try {
+        const birthTransits = await fetchTransitsForDate(dateObj);
+        if (birthTransits && birthTransits.length > 0) {
+          setTransits(birthTransits);
+          setTransitDate(dateObj);
+        }
+      } catch (transitError) {
+        // Transit failure doesn't block analysis
+        const errorMsg = transitError instanceof Error 
+          ? transitError.message 
+          : 'Failed to load birth transits';
+        setTransitError(errorMsg);
+        console.error('[App] Transit fetch failed (non-critical):', transitError);
+      } finally {
+        setLoadingTransits(false);
+      }
 
       setTimeout(() => {
         document.getElementById('analysis-section')?.scrollIntoView({ behavior: 'smooth' });
       }, 500);
 
-      // AUTO-PROGRESSION (Requirement C)
-      // Automatically trigger symbol generation after analysis in Demo/Happy Path
-      if (FORCE_HAPPY_PATH || DEMO_MODE) {
-        // Trigger generation with default config
-        performImageGeneration(result.prompt, { influence: 'balanced' }); // Default config
-      }
-
     } catch (error) {
+      // Analysis failure is critical
       setAstroState(CalculationState.ERROR);
-    } finally {
+      const errorMessage = error instanceof Error ? error.message : 'Analysis failed. Please try again.';
+      setAnalysisError(errorMessage);
+      console.error('[App] Analysis failed:', error);
       setLoadingTransits(false);
     }
   };
@@ -261,7 +299,7 @@ function AppContent() {
         {/* Header Status & Utility */}
         <div className="flex justify-between items-center mb-12 animate-fade-in">
           <div className="flex items-center gap-2 text-astro-subtext text-xs font-sans tracking-widest uppercase font-bold">
-            <span>Core_Logic_V5.1_${DEMO_MODE ? 'DEMO' : 'PROD'}</span>
+            <span>Core_Logic_V5.1_PROD</span>
             <span className="text-astro-gold animate-pulse">•</span>
             <span>
               {currentView === 'dashboard' ? 'FUSION_ACTIVE' :
@@ -335,6 +373,7 @@ function AppContent() {
                   isLoading={loadingTransits}
                   displayDate={transitDate}
                   title={astroState === CalculationState.IDLE ? t.weather.title : t.weather.matrix_title}
+                  error={transitError}
                 />
 
                 {astroState === CalculationState.IDLE && (
@@ -343,9 +382,19 @@ function AppContent() {
                   </div>
                 )}
 
-                {astroState === CalculationState.ERROR && (
-                  <div className="h-full flex flex-col items-center justify-center text-center py-20 bg-red-50 dark:bg-red-900/10 rounded-[3rem] border border-red-200">
-                    <h3 className="font-serif text-3xl text-red-600">{t.weather.connection_lost}</h3>
+                {astroState === CalculationState.ERROR && analysisError && (
+                  <div className="h-full flex flex-col items-center justify-center text-center py-20">
+                    <ErrorCard
+                      title="Analyse fehlgeschlagen"
+                      message={analysisError}
+                      severity="error"
+                      actionLabel="Erneut versuchen"
+                      onAction={() => {
+                        // Retry by clearing error and resetting state
+                        setAnalysisError(null);
+                        setAstroState(CalculationState.IDLE);
+                      }}
+                    />
                   </div>
                 )}
               </div>
