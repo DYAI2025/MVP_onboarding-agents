@@ -168,7 +168,7 @@ if (process.env.NODE_ENV === 'production') {
     }));
 
     // SPA Fallback
-    app.get('/:path*', (req, res, next) => {
+    app.get('/:path(.*)', (req, res, next) => {
       if (req.path.startsWith('/api/')) return next();
 
       const indexPath = path.join(distPath, 'index.html');
