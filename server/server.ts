@@ -198,6 +198,6 @@ app.use((err: unknown, req: express.Request, res: express.Response, _next: expre
   res.status(gatewayError.statusCode).json(formatErrorResponse(gatewayError, req.id));
 });
 
-app.listen(PORT, () => {
+app.listen(Number(PORT), '0.0.0.0', () => {
   console.log(JSON.stringify({ type: 'startup', message: `Gateway running on port ${PORT}` }));
 });
