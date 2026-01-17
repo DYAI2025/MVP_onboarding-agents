@@ -1,31 +1,17 @@
-# fly.toml app configuration file for Fly.io
-
-app = 'mvp-onboarding-agents'
-primary_region = 'fra'
+app = 'bazodiac'
+primary_region = 'ams'
 
 [build]
-  dockerfile = "Dockerfile"
-
-[env]
-  PORT = "8787"
-  NODE_ENV = "production"
-  BAZI_ENGINE_URL = "https://baziengine-v2.fly.dev"
 
 [http_service]
   internal_port = 8787
   force_https = true
-  auto_stop_machines = "stop"
+  auto_stop_machines = 'stop'
   auto_start_machines = true
-  min_machines_running = 1
+  min_machines_running = 0
+  processes = ['app']
 
 [[vm]]
-  memory = "1gb"
-  cpu_kind = "shared"
-  cpus = 4
-
-[[http_service.checks]]
-  grace_period = "10s"
-  interval = "30s"
-  method = "GET"
-  path = "/health"
-  timeout = "5s"
+  cpu_kind = 'shared'
+  cpus = 1
+  memory_mb = 512
