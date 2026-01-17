@@ -5,11 +5,11 @@ import { GatewayError, formatErrorResponse } from '../lib/errors';
 
 const router = Router();
 
-const WEBHOOK_SECRET = process.env.ELEVENLABS_WEBHOOK_SECRET;
+const WEBHOOK_SECRET = process.env.ELEVENLABS_TOOL_SECRET;
 const TIMESTAMP_TOLERANCE_MS = 5 * 60 * 1000; // 5 minutes
 
 if (!WEBHOOK_SECRET) {
-    console.error('[FATAL] ELEVENLABS_WEBHOOK_SECRET not set. Webhook endpoint will reject all requests.');
+    console.error('[FATAL] ELEVENLABS_TOOL_SECRET not set. Webhook endpoint will reject all requests.');
 }
 
 // ElevenLabs Post-call Webhook v0.2+ Payload Structure
