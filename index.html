@@ -167,9 +167,10 @@
   <script type="module">
     (function() {
       const apiKey = '%VITE_GOOGLE_MAPS_API_KEY%';
-      if (apiKey && apiKey.trim()) {
+      const sanitizedApiKey = apiKey && apiKey.trim();
+      if (sanitizedApiKey && !sanitizedApiKey.startsWith('%')) {
         const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initAutocomplete`;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${sanitizedApiKey}&libraries=places&callback=initAutocomplete`;
         script.async = true;
         script.defer = true;
         document.head.appendChild(script);
