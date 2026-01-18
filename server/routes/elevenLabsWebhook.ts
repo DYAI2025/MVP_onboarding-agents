@@ -90,7 +90,7 @@ router.post('/post-call', async (req: Request, res: Response) => {
             throw new GatewayError('UNAUTHORIZED', 'Webhook secret not configured', 401);
         }
 
-        const rawBody = req.rawBody;
+        const rawBody = Buffer.isBuffer(req.body) ? req.body : req.rawBody;
         if (!rawBody) {
             throw new GatewayError(
                 'INVALID_INPUT',
@@ -106,7 +106,13 @@ router.post('/post-call', async (req: Request, res: Response) => {
         }
 
         // 2. Parse payload (ElevenLabs v0.2+ format)
-        const payload = req.body as ElevenLabsWebhookPayload;
+        let payload: ElevenLabsWebhookPayload;
+        try {
+            payload = JSON.parse(rawBody.toString('utf8')) as ElevenLabsWebhookPayload;
+        } catch (parseError: unknown) {
+            const message = parseError instanceof Error ? parseError.message : 'Invalid JSON payload';
+            throw new GatewayError('INVALID_INPUT', `Unable to parse webhook payload: ${message}`, 400);
+        }
 
         if (payload.type !== 'conversation.ended') {
             console.warn(`[ElevenLabs Webhook] Unexpected event type: ${payload.type}`);
