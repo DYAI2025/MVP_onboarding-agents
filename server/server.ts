@@ -22,6 +22,11 @@ import './workers/reportWorker'; // Start background worker
 dotenv.config();
 validateEnv(); // Fail fast if config invalid
 
+const SESSION_SECRET = process.env.SESSION_SECRET;
+if (!SESSION_SECRET) {
+  throw new Error('[FATAL] SESSION_SECRET not set. Server cannot start without session secret.');
+}
+
 const app = express();
 const PORT = process.env.PORT || 8787;
 
