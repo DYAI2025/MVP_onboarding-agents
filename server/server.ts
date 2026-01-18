@@ -3,7 +3,10 @@ import { existsSync } from 'fs';
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { rateLimit } from 'express-rate-limit';
+import { RedisStore } from 'rate-limit-redis';
 import { GoogleGenAI } from '@google/genai';
+import { redis } from './lib/redis';
 import { requestIdMiddleware } from './lib/requestId';
 import { GatewayError, formatErrorResponse } from './lib/errors';
 import { uploadImageToStorage } from './lib/storageUpload';
@@ -12,11 +15,44 @@ import agentSessionRouter from './routes/agentSession';
 import agentToolsRouter from './routes/agentTools';
 import elevenLabsWebhookRouter from './routes/elevenLabsWebhook';
 import transitsRouter from './routes/transits';
+import { validateEnv } from './lib/envCheck'; // S1-T05
+import './workers/reportWorker'; // Start background worker
 
 dotenv.config();
+validateEnv(); // Fail fast if config invalid
 
 const app = express();
 const PORT = process.env.PORT || 8787;
+
+// Rate Limiters
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 100, // Limit each IP to 100 requests per `window`
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  store: new RedisStore({
+    // @ts-ignore - Valid ioredis call signature
+    sendCommand: (...args: string[]) => redis.call(...args),
+  }),
+  message: (req: express.Request, res: express.Response) => {
+    return formatErrorResponse(new GatewayError('RATE_LIMIT_EXCEEDED', 'Too many requests, please try again later.', 429), req.id as string);
+  }
+});
+
+const symbolLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 5, // Limit each IP to 5 symbol generations per window
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  store: new RedisStore({
+    // @ts-ignore - Valid ioredis call signature
+    sendCommand: (...args: string[]) => redis.call(...args),
+    prefix: 'rl:symbol:' // Separate prefix for this limiter
+  }),
+  message: (req: express.Request, res: express.Response) => {
+    return formatErrorResponse(new GatewayError('RATE_LIMIT_EXCEEDED', 'Symbol generation limit reached. Please try again later.', 429), req.id as string);
+  }
+});
 
 // Middleware
 app.use(cors({
@@ -36,6 +72,7 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(requestIdMiddleware);
+app.use(globalLimiter); // Apply global rate limiter
 
 // Structured logging middleware
 app.use((req, res, next) => {
@@ -66,7 +103,7 @@ if (!API_KEY) {
 const ai = API_KEY ? new GoogleGenAI({ apiKey: API_KEY }) : null;
 
 // Symbol generation endpoint (existing, updated with error handling)
-app.post('/api/symbol', async (req, res) => {
+app.post('/api/symbol', symbolLimiter, async (req, res) => {
   const { prompt, style, mode } = req.body;
 
   if (!ai) {
