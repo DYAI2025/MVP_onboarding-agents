@@ -88,7 +88,14 @@ router.post('/post-call', async (req: Request, res: Response) => {
             throw new GatewayError('UNAUTHORIZED', 'Webhook secret not configured', 401);
         }
 
-        const rawBody = JSON.stringify(req.body);
+        const rawBody = req.rawBody;
+        if (!rawBody) {
+            throw new GatewayError(
+                'INVALID_INPUT',
+                'Missing raw request body for signature verification',
+                400
+            );
+        }
         const signatureHeader = req.headers['elevenlabs-signature'] as string | undefined;
 
         const isValid = verifyWebhookSignature(rawBody, signatureHeader, WEBHOOK_SECRET);
