@@ -164,19 +164,12 @@
     }
   </script>
   <!-- Google Maps JavaScript API with Places Library -->
-  <!--
-    Environment configuration:
-    - VITE_GOOGLE_MAPS_API_KEY (required)
-      Google Maps API key used for the Places Autocomplete feature.
-      This must be defined in your environment (e.g. in `.env`) and documented in `.env.example`, e.g.:
-        VITE_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
-  -->
-  <script type="module">
+  <script>
     (function() {
       const apiKey = '%VITE_GOOGLE_MAPS_API_KEY%';
-      if (apiKey && apiKey !== '%VITE_GOOGLE_MAPS_API_KEY%') {
+      if (apiKey) {
         const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initAutocomplete`;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${resolvedApiKey}&libraries=places&callback=initAutocomplete`;
         script.async = true;
         script.defer = true;
         document.head.appendChild(script);
