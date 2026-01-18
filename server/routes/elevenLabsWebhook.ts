@@ -90,7 +90,7 @@ router.post('/post-call', async (req: Request, res: Response) => {
             throw new GatewayError('UNAUTHORIZED', 'Webhook secret not configured', 401);
         }
 
-        const rawBody = req.rawBody;
+        const rawBody = Buffer.isBuffer(req.body) ? req.body : req.rawBody;
         if (!rawBody) {
             throw new GatewayError(
                 'INVALID_INPUT',
@@ -106,7 +106,13 @@ router.post('/post-call', async (req: Request, res: Response) => {
         }
 
         // 2. Parse payload (ElevenLabs v0.2+ format)
-        const payload = req.body as ElevenLabsWebhookPayload;
+        let payload: ElevenLabsWebhookPayload;
+        try {
+            payload = JSON.parse(rawBody.toString('utf8')) as ElevenLabsWebhookPayload;
+        } catch (parseError: unknown) {
+            const message = parseError instanceof Error ? parseError.message : 'Invalid JSON payload';
+            throw new GatewayError('INVALID_INPUT', `Unable to parse webhook payload: ${message}`, 400);
+        }
 
         if (payload.type !== 'conversation.ended') {
             console.warn(`[ElevenLabs Webhook] Unexpected event type: ${payload.type}`);
@@ -117,7 +123,6 @@ router.post('/post-call', async (req: Request, res: Response) => {
         const { data } = payload;
         const elevenConvId = data.conversation_id;
         const agentId = data.agent_id;
-        const status = data.status;
         const transcript = data.transcript;
 
         // 3. Extract internal conversation_id from dynamic_variables
@@ -147,14 +152,7 @@ router.post('/post-call', async (req: Request, res: Response) => {
             .from('conversations')
             .update({
                 eleven_conversation_id: elevenConvId,
-                transcript: transcript || null,
-                status: 'completed',
-                metadata: {
-                    agent_id: agentId,
-                    status,
-                    ended_at: new Date().toISOString(),
-                    transcript_length: transcriptLength
-                },
+                agent_id: agentId,
                 ended_at: new Date().toISOString()
             })
             .eq('id', internalConvId);

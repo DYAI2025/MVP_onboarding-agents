@@ -164,27 +164,20 @@
     }
   </script>
   <!-- Google Maps JavaScript API with Places Library -->
-  <!--
-    The placeholder %VITE_GOOGLE_MAPS_API_KEY% is replaced at build time
-    by the VITE_GOOGLE_MAPS_API_KEY environment variable (e.g. via Vite).
-    To enable Google Maps Places autocomplete, define this variable in your
-    .env/.env.local and document it in .env.example, e.g.:
-      VITE_GOOGLE_MAPS_API_KEY=your-google-maps-api-key-here
-  -->
-  <script type="module">
-    const apiKey = "";
-    const hasApiKey = Boolean(apiKey);
-
-    if (hasApiKey) {
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initAutocomplete`;
-      script.async = true;
-      script.defer = true;
-      document.head.appendChild(script);
-    } else {
-      console.warn('Google Maps API key not set. Place autocomplete will not work.');
-      window.initAutocomplete = () => {}; // Noop callback
-    }
+  <script type="text/javascript">
+    (function() {
+      const apiKey = "%VITE_GOOGLE_MAPS_API_KEY%";
+      if (apiKey && apiKey !== "%VITE_GOOGLE_MAPS_API_KEY%") {
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initAutocomplete`;
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+      } else {
+        console.warn('Google Maps API key not set. Place autocomplete will not work.');
+        window.initAutocomplete = () => {}; // Noop callback
+      }
+    })();
   </script>
 </head>
 
