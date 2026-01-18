@@ -71,11 +71,22 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
 }));
-app.use(express.json({
+const jsonParser = express.json({
   verify: (req, _res, buf) => {
-    req.rawBody = buf.toString('utf8');
+    req.rawBody = buf;
   }
-}));
+});
+
+app.use('/api/webhooks/elevenlabs', express.raw({ type: 'application/json' }));
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/webhooks/elevenlabs')) {
+    if (Buffer.isBuffer(req.body)) {
+      req.rawBody = req.body;
+    }
+    return next();
+  }
+  return jsonParser(req, res, next);
+});
 app.use(requestIdMiddleware);
 app.use(globalLimiter); // Apply global rate limiter
 
