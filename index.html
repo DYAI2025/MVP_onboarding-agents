@@ -164,14 +164,10 @@
     }
   </script>
   <!-- Google Maps JavaScript API with Places Library -->
-  <!-- NOTE: This feature requires the VITE_GOOGLE_MAPS_API_KEY environment variable.
-       Configure it in your .env file and document it in .env.example so other
-       developers know to provide a Google Maps API key for autocomplete to work. -->
   <script>
-    (function () {
+    (function() {
       const apiKey = '%VITE_GOOGLE_MAPS_API_KEY%';
-      const resolvedApiKey = apiKey && !apiKey.startsWith('%') ? apiKey : '';
-      if (resolvedApiKey) {
+      if (apiKey) {
         const script = document.createElement('script');
         script.src = `https://maps.googleapis.com/maps/api/js?key=${resolvedApiKey}&libraries=places&callback=initAutocomplete`;
         script.async = true;
