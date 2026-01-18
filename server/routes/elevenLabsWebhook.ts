@@ -38,7 +38,7 @@ interface ElevenLabsWebhookPayload {
  * See: https://elevenlabs.io/docs/api-reference/webhooks#security
  */
 function verifyWebhookSignature(
-    payload: string,
+    payload: Buffer,
     signatureHeader: string | undefined,
     secret: string
 ): boolean {
@@ -65,17 +65,19 @@ function verifyWebhookSignature(
     }
 
     // Compute expected signature: HMAC-SHA256(timestamp + payload, secret)
-    const signedPayload = `${timestamp}.${payload}`;
+    const signedPayload = Buffer.concat([Buffer.from(`${timestamp}.`), payload]);
     const expectedSignature = crypto
         .createHmac('sha256', secret)
         .update(signedPayload)
         .digest('hex');
 
     // Constant-time comparison to prevent timing attacks
-    return crypto.timingSafeEqual(
-        Buffer.from(providedSignature),
-        Buffer.from(expectedSignature)
-    );
+    const providedBuffer = Buffer.from(providedSignature);
+    const expectedBuffer = Buffer.from(expectedSignature);
+    if (providedBuffer.length !== expectedBuffer.length) {
+        return false;
+    }
+    return crypto.timingSafeEqual(providedBuffer, expectedBuffer);
 }
 
 // Receives "Post Call" webhook from ElevenLabs

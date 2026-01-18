@@ -73,7 +73,7 @@ app.use(cors({
 }));
 app.use(express.json({
   verify: (req, _res, buf) => {
-    req.rawBody = buf.toString('utf8');
+    req.rawBody = buf;
   }
 }));
 app.use(requestIdMiddleware);
