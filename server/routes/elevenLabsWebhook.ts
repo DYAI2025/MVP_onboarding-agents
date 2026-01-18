@@ -123,7 +123,6 @@ router.post('/post-call', async (req: Request, res: Response) => {
         const { data } = payload;
         const elevenConvId = data.conversation_id;
         const agentId = data.agent_id;
-        const status = data.status;
         const transcript = data.transcript;
 
         // 3. Extract internal conversation_id from dynamic_variables
@@ -153,14 +152,7 @@ router.post('/post-call', async (req: Request, res: Response) => {
             .from('conversations')
             .update({
                 eleven_conversation_id: elevenConvId,
-                transcript: transcript || null,
-                status: 'completed',
-                metadata: {
-                    agent_id: agentId,
-                    status,
-                    ended_at: new Date().toISOString(),
-                    transcript_length: transcriptLength
-                },
+                agent_id: agentId,
                 ended_at: new Date().toISOString()
             })
             .eq('id', internalConvId);
