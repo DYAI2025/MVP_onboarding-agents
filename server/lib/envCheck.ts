@@ -9,12 +9,20 @@ const REQUIRED_VARS = [
   'ELEVENLABS_TOOL_SECRET',
   'ELEVENLABS_WEBHOOK_SECRET',
   'GEMINI_API_KEY',
-  'REDIS_URL'
+  'REDIS_URL',
+  'SUPABASE_URL',
+  'SUPABASE_SERVICE_ROLE_KEY'
 ];
 
 const OPTIONAL_VARS = [
-    'VITE_SUPABASE_URL', // Used by frontend, but maybe server uses it too via client
-    'VITE_SUPABASE_ANON_KEY'
+    'VITE_SUPABASE_URL', // Used by frontend
+    'VITE_SUPABASE_ANON_KEY', // Used by frontend
+    'VITE_ELEVENLABS_AGENT_ID_LEVI',
+    'VITE_ELEVENLABS_AGENT_ID_VICTORIA',
+    'ELEVENLABS_API_KEY',
+    'BAZI_ENGINE_URL',
+    'VITE_DEMO_MODE',
+    'VITE_GOOGLE_MAPS_API_KEY'
 ];
 
 export function validateEnv() {
