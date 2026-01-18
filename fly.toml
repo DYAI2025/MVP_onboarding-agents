@@ -1,7 +1,14 @@
+# fly.toml app configuration file for Fly.io
+
 app = 'bazodiac'
-primary_region = 'ams'
+primary_region = 'fra'
 
 [build]
+
+[env]
+  PORT = "8787"
+  NODE_ENV = "production"
+  BAZI_ENGINE_URL = "https://baziengine-v2.fly.dev"
 
 [http_service]
   internal_port = 8787
@@ -12,6 +19,13 @@ primary_region = 'ams'
   processes = ['app']
 
 [[vm]]
-  cpu_kind = 'shared'
-  cpus = 1
-  memory_mb = 512
+  memory = "1gb"
+  cpu_kind = "shared"
+  cpus = 4
+
+[[http_service.checks]]
+  grace_period = "30s"
+  interval = "30s"
+  method = "GET"
+  path = "/health"
+  timeout = "5s"
