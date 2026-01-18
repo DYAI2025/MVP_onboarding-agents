@@ -5,11 +5,14 @@ import { getSupabaseAdmin } from '../lib/supabaseAdmin';
 import { GatewayError, formatErrorResponse } from '../lib/errors';
 
 const router = Router();
-const SESSION_SECRET = process.env.SESSION_SECRET;
 
-if (!SESSION_SECRET) {
-    throw new Error('[FATAL] SESSION_SECRET not set. Server cannot start without session secret.');
-}
+const getSessionSecret = () => {
+    const secret = process.env.SESSION_SECRET;
+    if (!secret) {
+        throw new Error('[FATAL] SESSION_SECRET not set. Server cannot start without session secret.');
+    }
+    return secret;
+};
 
 interface SessionRequest {
     chart_id: string;
@@ -66,7 +69,7 @@ router.post('/', async (req: Request, res: Response) => {
             user_id,
             chart_id,
             agent_id
-        }, SESSION_SECRET, { expiresIn: '1h' });
+        }, getSessionSecret(), { expiresIn: '1h' });
 
         res.json({
             status: 'created',
