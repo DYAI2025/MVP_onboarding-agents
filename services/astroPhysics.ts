@@ -353,7 +353,76 @@ const fetchRemoteAnalysis = async (data: BirthData): Promise<FusionResult> => {
 };
 
 export const runFusionAnalysis = async (data: BirthData): Promise<FusionResult> => {
-  // Production-ready: No local fallback, fail loud on errors
-  // This ensures users get clear error messages instead of degraded service
-  return await fetchRemoteAnalysis(data);
+  const dateObj = new Date(data.date + 'T' + data.time);
+
+  try {
+    // 1. Try Remote Analysis (Preferred)
+    return await fetchRemoteAnalysis(data);
+
+  } catch (error) {
+    console.warn('[astroPhysics] Remote analysis failed, falling back to local engine:', error);
+
+    // 2. Fallback to Local Engine
+    // This promotes robustness: The user journey continues even if the backend is down.
+    
+    // Calculate basics
+    const analysis = calculateLocalAnalysis(dateObj);
+    
+    // Synthesize identity
+    const synthesis = synthesizeIdentity(analysis.western, analysis.eastern);
+
+    // Generate a fallback element matrix string matching server format
+    const elementMatrix = `${analysis.western.element} (Sun) / ${analysis.eastern.dayElement} (Day Master)`;
+
+    // Try to persist to Supabase to get a real chart ID for downstream features
+    let chartId = `local_${Date.now()}`;
+    
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            const { data: savedChart, error: saveError } = await supabase
+                .from('charts')
+                .insert({
+                    user_id: user.id,
+                    birth_json: {
+                        date: data.date,
+                        time: data.time,
+                        place: data.place,
+                        lat: data.lat,
+                        lon: data.lon,
+                        tz: data.tz
+                    },
+                    analysis_json: {
+                        western: analysis.western,
+                        eastern: analysis.eastern,
+                        synthesisTitle: synthesis.synthesisTitle,
+                        synthesisDescription: synthesis.synthesisDescription,
+                        elementMatrix: elementMatrix,
+                        prompt: synthesis.prompt
+                    }
+                })
+                .select('id')
+                .single();
+
+            if (!saveError && savedChart) {
+                console.log('[astroPhysics] Local analysis persisted to DB:', savedChart.id);
+                chartId = savedChart.id;
+            } else {
+                console.warn('[astroPhysics] Failed to persist local analysis:', saveError);
+            }
+        }
+    } catch (dbError) {
+        console.warn('[astroPhysics] DB persistence failed during fallback:', dbError);
+    }
+
+    return {
+      chartId: chartId,
+      synthesisTitle: synthesis.synthesisTitle,
+      synthesisDescription: synthesis.synthesisDescription,
+      elementMatrix: elementMatrix,
+      western: analysis.western,
+      eastern: analysis.eastern,
+      prompt: synthesis.prompt
+    };
+  }
 };

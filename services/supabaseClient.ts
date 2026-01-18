@@ -7,25 +7,11 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 const isConfigured = supabaseUrl && supabaseAnonKey && !supabaseUrl.includes('replace-with');
 
 if (!isConfigured) {
-    console.warn('Supabase URL or Anon Key missing. Persistence will fail.');
+    throw new Error(
+        'CRITICAL: Supabase URL or Anon Key is missing or invalid. \n' +
+        'Please configure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your .env file.\n' +
+        'The application cannot function without a database connection.'
+    );
 }
 
-export const supabase = isConfigured
-    ? createClient(supabaseUrl, supabaseAnonKey)
-    : {
-        auth: {
-            getSession: async () => ({ data: { session: null }, error: null }),
-            getUser: async () => ({ data: { user: null }, error: null }),
-            signInAnonymously: async () => ({ data: { user: null }, error: new Error('Supabase not configured') }),
-            signOut: async () => ({ error: null })
-        },
-        from: () => ({
-            select: () => ({
-                eq: () => ({
-                    single: () => Promise.resolve({ data: null, error: null }),
-                    order: () => ({ limit: () => Promise.resolve({ data: [], error: null }) })
-                })
-            }),
-            upsert: () => Promise.resolve({ error: null })
-        })
-    } as any;
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
