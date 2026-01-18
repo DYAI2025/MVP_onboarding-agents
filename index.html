@@ -164,10 +164,10 @@
     }
   </script>
   <!-- Google Maps JavaScript API with Places Library -->
-  <script>
+  <script type="text/javascript">
     (function() {
-      const apiKey = '%VITE_GOOGLE_MAPS_API_KEY%';
-      if (apiKey && apiKey !== '%VITE_GOOGLE_MAPS_API_KEY%') {
+      const apiKey = "%VITE_GOOGLE_MAPS_API_KEY%";
+      if (apiKey && apiKey !== "%VITE_GOOGLE_MAPS_API_KEY%") {
         const script = document.createElement('script');
         script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initAutocomplete`;
         script.async = true;
