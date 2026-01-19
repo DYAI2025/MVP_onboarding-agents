@@ -77,12 +77,16 @@ const jsonParser = express.json({
   }
 });
 
-app.use('/api/webhooks/elevenlabs', express.raw({ type: 'application/json' }));
+const elevenLabsRawParser = express.raw({
+  type: '*/*',
+  verify: (req, _res, buf) => {
+    req.rawBody = buf;
+  }
+});
+
+app.use('/api/webhooks/elevenlabs', elevenLabsRawParser);
 app.use((req, res, next) => {
   if (req.path.startsWith('/api/webhooks/elevenlabs')) {
-    if (Buffer.isBuffer(req.body)) {
-      req.rawBody = req.body;
-    }
     return next();
   }
   return jsonParser(req, res, next);
