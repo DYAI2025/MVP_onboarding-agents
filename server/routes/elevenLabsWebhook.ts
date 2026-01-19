@@ -90,8 +90,8 @@ router.post('/post-call', async (req: Request, res: Response) => {
             throw new GatewayError('UNAUTHORIZED', 'Webhook secret not configured', 401);
         }
 
-        const rawBody = Buffer.isBuffer(req.body) ? req.body : req.rawBody;
-        if (!rawBody) {
+        const rawBody = req.rawBody ?? (Buffer.isBuffer(req.body) ? req.body : undefined);
+        if (!rawBody || !Buffer.isBuffer(rawBody)) {
             throw new GatewayError(
                 'INVALID_INPUT',
                 'Missing raw request body for signature verification',
