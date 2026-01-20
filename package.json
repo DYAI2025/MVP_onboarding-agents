@@ -10,7 +10,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "bash -c 'source scripts/ensure-swisseph.sh && npx vitest run'",
-    "start": "tsx server/server.ts"
+    "start": "NODE_ENV=production tsx server/server.ts"
   },
   "dependencies": {
     "@google/genai": "^1.34.0",
