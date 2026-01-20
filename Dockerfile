@@ -1,5 +1,5 @@
 # Multi-stage build for Full-Stack Deployment
-# Stage 1: Build Frontend
+# Stage 1: Build Frontend and Backend
 FROM node:20 AS builder
 
 WORKDIR /app
@@ -7,13 +7,13 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install ALL dependencies
+# Install ALL dependencies (needed for TypeScript compilation)
 RUN npm ci
 
 # Copy source code
 COPY . .
 
-# Build the frontend (Vite)
+# Build both frontend (Vite) and backend (TypeScript compilation)
 RUN npm run build
 
 # Stage 2: Production Runtime
@@ -25,11 +25,8 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --only=production
 
-# Copy built frontend from builder stage
+# Copy compiled output from builder stage
 COPY --from=builder /app/dist ./dist
-
-# Copy server code and its internal dependencies
-COPY server ./server
 
 # Expose port
 EXPOSE 8787
@@ -38,5 +35,5 @@ EXPOSE 8787
 ENV NODE_ENV=production
 ENV PORT=8787
 
-# Start the server using npm start (which calls tsx)
+# Start the compiled server (no tsx needed in production)
 CMD ["npm", "start"]
