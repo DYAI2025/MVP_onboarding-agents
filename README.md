@@ -41,6 +41,37 @@ This is a polished MVP for the Astro Agents onboarding flow. It includes a front
 4. **Access the App:**
    Open <http://localhost:3000>
 
+## Deploy to Railway
+
+This repo is ready for Railway via the included `railway.toml` (build + start commands and health check). The backend serves the built Vite app from `/dist` in production.
+
+**Recommended setup**
+1. **Create a Railway project** and connect this repo.
+2. **Add a Redis service** and attach its `REDIS_URL` to the app service.
+3. **Configure environment variables** (Settings → Variables).
+
+**Required variables (production)**
+- `SESSION_SECRET`
+- `GEMINI_API_KEY`
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `VITE_SUPABASE_URL` (used at build time)
+- `VITE_SUPABASE_ANON_KEY` (used at build time)
+- `REDIS_URL`
+
+**Optional variables (feature-gated)**
+- `ELEVENLABS_API_KEY`, `ELEVENLABS_TOOL_SECRET`, `ELEVENLABS_WEBHOOK_SECRET`
+- `VITE_ELEVENLABS_AGENT_ID_LEVI`, `VITE_ELEVENLABS_AGENT_ID_VICTORIA`
+- `BAZI_ENGINE_URL` (defaults to hosted engine)
+- `VITE_DEMO_MODE`, `VITE_GOOGLE_MAPS_API_KEY`
+
+**Railway build + start**
+- Build command: `npm run build`
+- Start command: `npm start`
+
+**Health check**
+- `GET /health` returns `200` when the server is ready.
+
 ## Architecture
 
 - **Frontend**: React 19, Vite, TailwindCSS.
@@ -55,3 +86,4 @@ This is a polished MVP for the Astro Agents onboarding flow. It includes a front
 - `npm run dev:web`: Start Client only
 - `npm run dev:server`: Start Server only
 - `npm run test`: Run Unit Tests (Vitest)
+- `npm start`: Run the production server (serves `dist/` and API)
