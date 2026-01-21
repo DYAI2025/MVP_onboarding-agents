@@ -20,27 +20,61 @@ npm run dev:web
 # Backend only
 npm run dev:server
 
-# Build for production
+# Build for production (compiles TypeScript server + builds frontend)
 npm run build
+
+# Build frontend only
+npm run build:frontend
+
+# Build server only
+npm run build:server
+
+# Start production server (requires build first)
+npm start
 
 # Run tests (requires swisseph setup)
 npm run test
 
 # Run a specific test file
 npm run test -- services/geminiService.test.ts
+
+# Railway deployment helpers
+./scripts/railway-setup.sh       # Interactive Railway setup
+./scripts/railway-predeploy.sh   # Pre-deployment validation
 ```
 
 Note: No linter is configured in this project.
 
 ## Environment Setup
 
+### Development Environment
+
 Create `.env` in root:
 ```
 GEMINI_API_KEY=your_google_gemini_api_key_here
 VITE_DEMO_MODE=false  # Optional: set to 'false' to enable network calls (default: true)
+SESSION_SECRET=local-dev-secret  # Required for session management
 ```
 
 The test script requires the Swiss Ephemeris path. The `scripts/ensure-swisseph.sh` script sets `SE_EPHE_PATH` automatically.
+
+### Production Environment (Railway)
+
+For Railway deployment, see `.env.production.template` for all required variables. Key requirements:
+
+**Required in Production:**
+- `SESSION_SECRET` - Generate with `openssl rand -hex 32`
+- `GEMINI_API_KEY` - From Google AI Studio
+- `REDIS_URL` - Auto-configured by Railway Redis service
+- `ELEVENLABS_API_KEY`, `ELEVENLABS_TOOL_SECRET`, `ELEVENLABS_WEBHOOK_SECRET`
+- Supabase credentials: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+
+**Auto-configured by Railway:**
+- `PORT` - Default 8787
+- `NODE_ENV` - Set to "production"
+- `RAILWAY_PUBLIC_DOMAIN`, `RAILWAY_STATIC_URL`
+
+See `docs/RAILWAY_DEPLOYMENT.md` for complete deployment guide.
 
 ## Architecture
 
@@ -103,3 +137,31 @@ Core types in `types.ts`: `BirthData`, `FusionResult`, `Transit`, `CalculationSt
 - The backend uses `@google/genai` SDK with model `gemini-2.0-flash-exp`
 - React 19 with `react-jsx` transform (no manual React imports needed)
 - State persists to localStorage; use Reset button or `clearState()` to clear
+
+### Production Build & Deployment
+
+- **TypeScript Compilation**: Server code is compiled to JavaScript for production (see `tsconfig.server.json`)
+- **Build Output**: Frontend → `dist/`, Server → `dist/server/`
+- **Docker Multi-Stage**: Builder stage compiles TypeScript, runner stage uses compiled output only
+- **Redis**: Optional in development (uses mock), required in production
+- **Environment Validation**: Different requirements for dev vs production (see `server/lib/envCheck.ts`)
+- **Health Checks**: Multiple endpoints for Railway monitoring:
+  - `/health` - Simple fast check
+  - `/health/detailed` - Comprehensive status (Redis, Supabase, Gemini)
+  - `/ready` - Deployment readiness probe
+- **Graceful Shutdown**: Server handles SIGTERM/SIGINT for clean Railway deployment updates
+- **CORS**: Production-optimized with Railway domain whitelisting
+
+### Railway Deployment
+
+See `docs/RAILWAY_DEPLOYMENT.md` for complete guide. Quick start:
+
+1. Add Redis service in Railway Dashboard
+2. Set environment variables (use `.env.production.template`)
+3. Run `./scripts/railway-setup.sh` for interactive setup
+4. Deploy via GitHub integration or `railway up`
+
+**Pre-deployment validation:**
+```bash
+./scripts/railway-predeploy.sh
+```

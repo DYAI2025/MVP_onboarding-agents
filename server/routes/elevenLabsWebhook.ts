@@ -91,10 +91,10 @@ router.post('/post-call', async (req: Request, res: Response) => {
         }
 
         const rawBody = Buffer.isBuffer(req.body) ? req.body : req.rawBody;
-        if (!rawBody) {
+        if (!rawBody || !Buffer.isBuffer(rawBody)) {
             throw new GatewayError(
                 'INVALID_INPUT',
-                'Missing raw request body for signature verification',
+                'Missing raw request body for signature verification. Ensure express.raw() is configured for this route.',
                 400
             );
         }

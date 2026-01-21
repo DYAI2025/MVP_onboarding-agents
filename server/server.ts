@@ -17,6 +17,7 @@ import agentToolsRouter from './routes/agentTools';
 import elevenLabsWebhookRouter from './routes/elevenLabsWebhook';
 import transitsRouter from './routes/transits';
 import { validateEnv } from './lib/envCheck'; // S1-T05
+import { performHealthCheck, simpleHealthCheck } from './lib/healthCheck';
 import './workers/reportWorker'; // Start background worker
 
 dotenv.config();
@@ -29,6 +30,7 @@ if (!SESSION_SECRET) {
 
 const app = express();
 const PORT = process.env.PORT || 8787;
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
 // Rate Limiters
 const globalLimiter = rateLimit({
@@ -60,17 +62,43 @@ const symbolLimiter = rateLimit({
   }
 });
 
-// Middleware
+// CORS Configuration - Railway optimized
+const ALLOWED_ORIGINS = [
+  'http://localhost:3000',
+  'http://localhost:8787',
+  'http://127.0.0.1:3000',
+  ...(process.env.RAILWAY_PUBLIC_DOMAIN ? [`https://${process.env.RAILWAY_PUBLIC_DOMAIN}`] : []),
+  ...(process.env.RAILWAY_STATIC_URL ? [process.env.RAILWAY_STATIC_URL] : []),
+  ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [])
+];
+
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
+    // Allow requests with no origin (like mobile apps, curl, or same-origin)
     if (!origin) return callback(null, true);
-    // Allow any localhost origin for development
-    if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+
+    // In development, allow all localhost
+    if (!IS_PRODUCTION && (origin.includes('localhost') || origin.includes('127.0.0.1'))) {
       return callback(null, true);
     }
-    // Fallback for other origins
-    callback(null, true);
+
+    // Check against allowed origins
+    if (ALLOWED_ORIGINS.some(allowed => origin.includes(allowed.replace(/^https?:\/\//, '')))) {
+      return callback(null, true);
+    }
+
+    // In production, allow Railway domains
+    if (IS_PRODUCTION && origin.includes('.railway.app')) {
+      return callback(null, true);
+    }
+
+    // Log rejected origins in production for debugging
+    if (IS_PRODUCTION) {
+      console.warn(JSON.stringify({ type: 'cors_rejected', origin }));
+    }
+
+    // Fallback: allow in development, reject in production
+    callback(IS_PRODUCTION ? new Error('CORS not allowed') : null, !IS_PRODUCTION);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -82,12 +110,16 @@ const jsonParser = express.json({
   }
 });
 
-app.use('/api/webhooks/elevenlabs', express.raw({ type: 'application/json' }));
+const elevenLabsRawParser = express.raw({
+  type: '*/*',
+  verify: (req, _res, buf) => {
+    req.rawBody = buf;
+  }
+});
+
+app.use('/api/webhooks/elevenlabs', elevenLabsRawParser);
 app.use((req, res, next) => {
   if (req.path.startsWith('/api/webhooks/elevenlabs')) {
-    if (Buffer.isBuffer(req.body)) {
-      req.rawBody = req.body;
-    }
     return next();
   }
   return jsonParser(req, res, next);
@@ -111,9 +143,44 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', version: '1.0.0', request_id: req.id });
+// Health check endpoints
+// Simple health check for Railway (fast response)
+app.get('/health', async (req, res) => {
+  const health = await simpleHealthCheck();
+  res.json({ ...health, request_id: req.id });
+});
+
+// Detailed health check for monitoring
+app.get('/health/detailed', async (req, res) => {
+  try {
+    const health = await performHealthCheck();
+    const statusCode = health.status === 'healthy' ? 200 : health.status === 'degraded' ? 200 : 503;
+    res.status(statusCode).json({ ...health, request_id: req.id });
+  } catch (error) {
+    res.status(503).json({
+      status: 'unhealthy',
+      error: error instanceof Error ? error.message : 'Health check failed',
+      request_id: req.id
+    });
+  }
+});
+
+// Readiness check (for Railway deployment validation)
+app.get('/ready', async (req, res) => {
+  try {
+    const health = await performHealthCheck();
+    if (health.status === 'unhealthy') {
+      res.status(503).json({ ready: false, reason: 'Service unhealthy', request_id: req.id });
+    } else {
+      res.json({ ready: true, status: health.status, request_id: req.id });
+    }
+  } catch (error) {
+    res.status(503).json({
+      ready: false,
+      error: error instanceof Error ? error.message : 'Readiness check failed',
+      request_id: req.id
+    });
+  }
 });
 
 // Gemini client
@@ -256,6 +323,36 @@ app.use((err: unknown, req: express.Request, res: express.Response, _next: expre
   res.status(gatewayError.statusCode).json(formatErrorResponse(gatewayError, req.id));
 });
 
-app.listen(Number(PORT), '0.0.0.0', () => {
+const server = app.listen(Number(PORT), '0.0.0.0', () => {
   console.log(JSON.stringify({ type: 'startup', message: `Gateway running on port ${PORT}` }));
 });
+
+// Graceful shutdown handling for Railway deployment updates
+const shutdown = async (signal: string) => {
+  console.log(JSON.stringify({ type: 'shutdown', signal, message: 'Shutting down gracefully...' }));
+
+  // Stop accepting new connections
+  server.close(() => {
+    console.log(JSON.stringify({ type: 'shutdown', message: 'HTTP server closed' }));
+  });
+
+  // Close Redis connection if it exists
+  if (redis && typeof redis.quit === 'function') {
+    try {
+      await redis.quit();
+      console.log(JSON.stringify({ type: 'shutdown', message: 'Redis connection closed' }));
+    } catch (err) {
+      console.error(JSON.stringify({ type: 'shutdown_error', message: 'Redis shutdown error', error: err instanceof Error ? err.message : 'Unknown error' }));
+    }
+  }
+
+  // Give pending requests time to complete
+  setTimeout(() => {
+    console.log(JSON.stringify({ type: 'shutdown', message: 'Forcing exit after timeout' }));
+    process.exit(0);
+  }, 10000); // 10 second timeout
+};
+
+// Listen for termination signals (Railway sends SIGTERM on deployments)
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
