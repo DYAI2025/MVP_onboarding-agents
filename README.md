@@ -87,3 +87,5 @@ This repo is ready for Railway via the included `railway.toml` (build + start co
 - `npm run dev:server`: Start Server only
 - `npm run test`: Run Unit Tests (Vitest)
 - `npm start`: Run the production server (serves `dist/` and API)
+
+<!-- Devin test comment - verifying repo access -->
