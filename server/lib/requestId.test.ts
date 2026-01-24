@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { requestIdMiddleware } from './requestId';
+import { requestIdMiddleware } from './requestId.js';
 
 describe('requestIdMiddleware', () => {
   it('adds request id to req and response header', () => {

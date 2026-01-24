@@ -1,8 +1,8 @@
 import { Router, Request, Response } from 'express';
 import crypto from 'crypto';
-import { getSupabaseAdmin } from '../lib/supabaseAdmin';
-import { GatewayError, formatErrorResponse } from '../lib/errors';
-import { reportQueue } from '../lib/queue';
+import { getSupabaseAdmin } from '../lib/supabaseAdmin.js';
+import { GatewayError, formatErrorResponse } from '../lib/errors.js';
+import { reportQueue } from '../lib/queue.js';
 
 const router = Router();
 
@@ -203,16 +203,20 @@ router.post('/post-call', async (req: Request, res: Response) => {
         }
 
         // 7. Enqueue Job in BullMQ
-        try {
-            await reportQueue.add('generate-report', { 
-                conversation_id: internalConvId,
-                job_id: null // We don't have the job DB ID easily here unless we select it back, but existing worker logic handles it by conv_id
-            });
-            console.log(`[ElevenLabs Webhook] Enqueued BullMQ job for ${internalConvId}`);
-        } catch (queueError: any) {
-            console.error(`[ElevenLabs Webhook] Failed to enqueue job: ${queueError.message}`);
-            // Non-blocking error? If queue fails, the job remains 'queued' in DB but never processes.
-            // Ideally we should alert. For now, we log specific error.
+        if (reportQueue) {
+            try {
+                await reportQueue.add('generate-report', {
+                    conversation_id: internalConvId,
+                    job_id: null // We don't have the job DB ID easily here unless we select it back, but existing worker logic handles it by conv_id
+                });
+                console.log(`[ElevenLabs Webhook] Enqueued BullMQ job for ${internalConvId}`);
+            } catch (queueError: any) {
+                console.error(`[ElevenLabs Webhook] Failed to enqueue job: ${queueError.message}`);
+                // Non-blocking error? If queue fails, the job remains 'queued' in DB but never processes.
+                // Ideally we should alert. For now, we log specific error.
+            }
+        } else {
+            console.warn('[ElevenLabs Webhook] Redis not available - job not enqueued');
         }
 
         console.log(

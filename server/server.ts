@@ -7,18 +7,18 @@ import dotenv from 'dotenv';
 import { rateLimit } from 'express-rate-limit';
 import { RedisStore } from 'rate-limit-redis';
 import { GoogleGenAI } from '@google/genai';
-import { redis } from './lib/redis';
-import { requestIdMiddleware } from './lib/requestId';
-import { GatewayError, formatErrorResponse } from './lib/errors';
-import { uploadImageToStorage } from './lib/storageUpload';
-import analysisRouter from './routes/analysis';
-import agentSessionRouter from './routes/agentSession';
-import agentToolsRouter from './routes/agentTools';
-import elevenLabsWebhookRouter from './routes/elevenLabsWebhook';
-import transitsRouter from './routes/transits';
-import { validateEnv } from './lib/envCheck'; // S1-T05
-import { performHealthCheck, simpleHealthCheck } from './lib/healthCheck';
-import './workers/reportWorker'; // Start background worker
+import { redis } from './lib/redis.js';
+import { requestIdMiddleware } from './lib/requestId.js';
+import { GatewayError, formatErrorResponse } from './lib/errors.js';
+import { uploadImageToStorage } from './lib/storageUpload.js';
+import analysisRouter from './routes/analysis.js';
+import agentSessionRouter from './routes/agentSession.js';
+import agentToolsRouter from './routes/agentTools.js';
+import elevenLabsWebhookRouter from './routes/elevenLabsWebhook.js';
+import transitsRouter from './routes/transits.js';
+import { validateEnv } from './lib/envCheck.js'; // S1-T05
+import { performHealthCheck, simpleHealthCheck } from './lib/healthCheck.js';
+import './workers/reportWorker.js'; // Start background worker
 
 dotenv.config();
 validateEnv(); // Fail fast if config invalid
@@ -32,15 +32,21 @@ const app = express();
 const PORT = process.env.PORT || 8787;
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
-// Rate Limiters
+// Check if we have a real Redis connection (not the mock)
+const REDIS_URL = process.env.REDIS_URL || process.env.REDIS_PRIVATE_URL;
+const hasRedis = REDIS_URL && !REDIS_URL.includes('localhost');
+
+// Rate Limiters - use Redis store in production, memory store in dev
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   limit: 100, // Limit each IP to 100 requests per `window`
   standardHeaders: 'draft-7',
   legacyHeaders: false,
-  store: new RedisStore({
-    // @ts-ignore - Valid ioredis call signature
-    sendCommand: (...args: string[]) => redis.call(...args),
+  ...(hasRedis && {
+    store: new RedisStore({
+      // @ts-ignore - Valid ioredis call signature
+      sendCommand: (...args: string[]) => redis.call(...args),
+    })
   }),
   message: (req: express.Request, res: express.Response) => {
     return formatErrorResponse(new GatewayError('RATE_LIMIT_EXCEEDED', 'Too many requests, please try again later.', 429), req.id as string);
@@ -52,10 +58,12 @@ const symbolLimiter = rateLimit({
   limit: 5, // Limit each IP to 5 symbol generations per window
   standardHeaders: 'draft-7',
   legacyHeaders: false,
-  store: new RedisStore({
-    // @ts-ignore - Valid ioredis call signature
-    sendCommand: (...args: string[]) => redis.call(...args),
-    prefix: 'rl:symbol:' // Separate prefix for this limiter
+  ...(hasRedis && {
+    store: new RedisStore({
+      // @ts-ignore - Valid ioredis call signature
+      sendCommand: (...args: string[]) => redis.call(...args),
+      prefix: 'rl:symbol:' // Separate prefix for this limiter
+    })
   }),
   message: (req: express.Request, res: express.Response) => {
     return formatErrorResponse(new GatewayError('RATE_LIMIT_EXCEEDED', 'Symbol generation limit reached. Please try again later.', 429), req.id as string);
@@ -292,8 +300,9 @@ if (process.env.NODE_ENV === 'production') {
       etag: true
     }));
 
-    // SPA Fallback
-    app.get('*', (req, res, next) => {
+    // SPA Fallback - Express 5 compatible
+    app.use((req, res, next) => {
+      // Skip API routes
       if (req.path.startsWith('/api/')) return next();
 
       const indexPath = path.join(distPath, 'index.html');

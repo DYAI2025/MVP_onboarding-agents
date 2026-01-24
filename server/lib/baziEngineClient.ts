@@ -1,4 +1,4 @@
-import { GatewayError } from './errors';
+import { GatewayError } from './errors.js';
 
 export interface BirthInput {
   date: string;

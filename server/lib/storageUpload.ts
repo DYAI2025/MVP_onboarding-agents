@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import { supabaseAdmin } from './supabaseAdmin';
+import { supabaseAdmin } from './supabaseAdmin.js';
 
 export interface UploadResult {
   url: string;

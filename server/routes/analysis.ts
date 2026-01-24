@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
-import { baziEngine, BirthInput } from '../lib/baziEngineClient';
-import { getSupabaseAdmin } from '../lib/supabaseAdmin';
-import { GatewayError, formatErrorResponse } from '../lib/errors';
+import { baziEngine, BirthInput } from '../lib/baziEngineClient.js';
+import { getSupabaseAdmin } from '../lib/supabaseAdmin.js';
+import { GatewayError, formatErrorResponse } from '../lib/errors.js';
 
 const router = Router();
 

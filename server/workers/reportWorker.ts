@@ -1,15 +1,19 @@
 import { Worker, Job } from 'bullmq';
 import { GoogleGenAI } from '@google/genai';
 import dotenv from 'dotenv';
-import { getSupabaseAdmin } from '../lib/supabaseAdmin';
-import { redis } from '../lib/redis';
+import { getSupabaseAdmin } from '../lib/supabaseAdmin.js';
+import { redis } from '../lib/redis.js';
 
 dotenv.config();
 
 const API_KEY = process.env.GEMINI_API_KEY;
 const ai = API_KEY ? new GoogleGenAI({ apiKey: API_KEY }) : null;
 
-export const reportWorker = new Worker('report-generation', async (job: Job) => {
+// Only create worker if we have a real Redis connection
+const REDIS_URL = process.env.REDIS_URL || process.env.REDIS_PRIVATE_URL;
+const hasRedis = REDIS_URL && !REDIS_URL.includes('localhost');
+
+const workerHandler = async (job: Job) => {
   const { conversation_id, job_id } = job.data;
   console.log(`[ReportWorker] Processing job for conversation ${conversation_id}`);
 
@@ -106,22 +110,25 @@ export const reportWorker = new Worker('report-generation', async (job: Job) => 
 
   } catch (error: any) {
       console.error(`[ReportWorker] Failed: ${error.message}`);
-      
+
       // Update Job Status to 'failed'
       await supabase
         .from('jobs')
-        .update({ 
-            status: 'failed', 
+        .update({
+            status: 'failed',
             error: error.message,
-            updated_at: new Date().toISOString() 
+            updated_at: new Date().toISOString()
         })
         .eq('payload->>conversation_id', conversation_id)
         // We target 'processing' or 'queued' to be safe
         .in('status', ['queued', 'processing']);
-        
+
       throw error;
   }
-}, {
+};
+
+// Export worker only if we have Redis, otherwise export null
+export const reportWorker = hasRedis ? new Worker('report-generation', workerHandler, {
   // Use the connection logic from redis.ts but BullMQ needs a fresh connection for blocking pops usually,
   // or we can pass the existing client. Standard practice is providing connection IS.
   // But since we exported 'redis' as a client, reusing it might block it if we use blocking commands?
@@ -129,7 +136,13 @@ export const reportWorker = new Worker('report-generation', async (job: Job) => 
   // Check lib/redis.ts: we export 'redis' which is one client.
   // Recommendation: Create new connection for worker.
   connection: {
-      url: process.env.REDIS_URL || 'redis://localhost:6379',
+      url: REDIS_URL || 'redis://localhost:6379',
       maxRetriesPerRequest: null
   }
-});
+}) : null;
+
+if (!hasRedis) {
+  console.log('[ReportWorker] Skipped - Redis not available');
+} else {
+  console.log('[ReportWorker] Initialized successfully');
+}

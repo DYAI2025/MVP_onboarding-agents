@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { GatewayError, formatErrorResponse } from '../lib/errors';
+import { GatewayError, formatErrorResponse } from '../lib/errors.js';
 
 const router = Router();
 

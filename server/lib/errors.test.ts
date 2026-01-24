@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { GatewayError, formatErrorResponse } from './errors';
+import { GatewayError, formatErrorResponse } from './errors.js';
 
 describe('GatewayError', () => {
   it('creates error with code and message', () => {

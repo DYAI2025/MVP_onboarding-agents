@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { BaziEngineClient } from './baziEngineClient';
+import { BaziEngineClient } from './baziEngineClient.js';
 
 describe('BaziEngineClient', () => {
   let client: BaziEngineClient;

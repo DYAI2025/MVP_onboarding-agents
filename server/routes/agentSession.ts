@@ -1,8 +1,8 @@
 import { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
-import { getSupabaseAdmin } from '../lib/supabaseAdmin';
-import { GatewayError, formatErrorResponse } from '../lib/errors';
+import { getSupabaseAdmin } from '../lib/supabaseAdmin.js';
+import { GatewayError, formatErrorResponse } from '../lib/errors.js';
 
 const router = Router();
 

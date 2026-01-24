@@ -1,5 +1,5 @@
-import { redis } from './redis';
-import { getSupabaseAdmin } from './supabaseAdmin';
+import { redis } from './redis.js';
+import { getSupabaseAdmin } from './supabaseAdmin.js';
 
 export interface HealthStatus {
   status: 'healthy' | 'degraded' | 'unhealthy';

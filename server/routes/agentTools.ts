@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import { getSupabaseAdmin } from '../lib/supabaseAdmin';
-import { GatewayError, formatErrorResponse } from '../lib/errors';
+import { getSupabaseAdmin } from '../lib/supabaseAdmin.js';
+import { GatewayError, formatErrorResponse } from '../lib/errors.js';
 
 const router = Router();
 const SESSION_SECRET = process.env.SESSION_SECRET;
