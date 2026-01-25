@@ -130,6 +130,59 @@ See `docs/RAILWAY_DEPLOYMENT.md` for complete deployment guide.
 ### Type Definitions
 Core types in `types.ts`: `BirthData`, `FusionResult`, `Transit`, `CalculationState` enum, quiz-related types.
 
+## Backend Structure
+
+### Server Architecture
+- **Main server**: `server/server.ts` - Express app with CORS, JSON parsing, request ID tracking
+- **Routes**: Modular routes in `server/routes/` handle specific endpoints
+  - `/api/symbol` - Symbol generation via Gemini (includes image upload to Supabase)
+  - `/api/analysis` - Astrological analysis with BaziEngine and database persistence
+  - `/api/transits` - Transit calculations
+  - `/api/agent-session` - Agent conversation state management
+  - `/api/agent-tools` - Custom tools for agent interactions
+  - `/api/elevenlabs-webhook` - Webhook for voice agent callbacks
+- **Libraries**: `server/lib/` contains utilities
+  - `baziEngineClient.ts` - HTTP client for remote BaziEngine v2
+  - `supabaseAdmin.ts` - Admin client for database operations
+  - `errors.ts` - Structured error handling with `GatewayError` class
+  - `requestId.ts` - Request ID tracking middleware for observability
+  - `storageUpload.ts` - Supabase Storage operations
+
+### Observability Pattern
+- Every request gets a unique `request_id` via middleware
+- Structured logging: `console.log(JSON.stringify({ type, id, method, path, status, duration_ms }))`
+- Error responses always include `request_id` for debugging
+
+### Error Handling Pattern
+- Use `GatewayError` class with `(code, message, statusCode)`
+- Fail loud on validation errors (4xx) vs engine unavailability (5xx)
+- Format responses with `formatErrorResponse(error, requestId)` for consistency
+
+### Database Integration (Supabase)
+- User authentication: Anonymous or OAuth
+- Tables: `profiles` (user UI state), `charts` (astrological analyses), `sessions` (agent conversations)
+- Analysis results persist to `charts` table with `analysis_json` blob
+- Agent sessions stored in `sessions` table for conversation continuity
+
+## Frontend Patterns
+
+### Testing
+- **Test framework**: Vitest (configured in `vite.config.ts`)
+- **Test files**: Colocated with source (e.g., `service.test.ts` next to `service.ts`)
+- **Mock approach**: Global `fetch` mocking via `vi.fn()` for API layer testing
+- Run specific test: `npm run test -- services/geminiService.test.ts`
+
+### State Management
+- Application state in `App.tsx` using React hooks + `CalculationState` enum (IDLE → CALCULATING → COMPLETE → GENERATING_IMAGE → FINISHED/ERROR)
+- Journey persistence: `loadState()` / `saveState()` from `services/persistence.ts`
+- Supabase integration for cloud state (fallback to localStorage if unavailable)
+- Language context: `contexts/LanguageContext.tsx` with i18n via `constants/translations.ts`
+
+### Error Handling
+- `ErrorCard.tsx` component displays errors with contextual UI
+- Services throw custom errors that bubble to component-level error boundaries
+- Symbol generation uses `SymbolGenerationError` with error code and request ID
+
 ## Key Technical Notes
 
 - Path alias `@/*` maps to project root
@@ -137,31 +190,53 @@ Core types in `types.ts`: `BirthData`, `FusionResult`, `Transit`, `CalculationSt
 - The backend uses `@google/genai` SDK with model `gemini-2.0-flash-exp`
 - React 19 with `react-jsx` transform (no manual React imports needed)
 - State persists to localStorage; use Reset button or `clearState()` to clear
+- TypeScript strict mode enabled; `moduleResolution: "bundler"`
+- CORS configured to allow localhost, mobile debugging, and Railway domains
 
-### Production Build & Deployment
+## Common Development Tasks
 
-- **TypeScript Compilation**: Server code is compiled to JavaScript for production (see `tsconfig.server.json`)
-- **Build Output**: Frontend → `dist/`, Server → `dist/server/`
-- **Docker Multi-Stage**: Builder stage compiles TypeScript, runner stage uses compiled output only
-- **Redis**: Optional in development (uses mock), required in production
-- **Environment Validation**: Different requirements for dev vs production (see `server/lib/envCheck.ts`)
-- **Health Checks**: Multiple endpoints for Railway monitoring:
-  - `/health` - Simple fast check
-  - `/health/detailed` - Comprehensive status (Redis, Supabase, Gemini)
-  - `/ready` - Deployment readiness probe
-- **Graceful Shutdown**: Server handles SIGTERM/SIGINT for clean Railway deployment updates
-- **CORS**: Production-optimized with Railway domain whitelisting
+### Adding a New Backend Endpoint
+1. Create route file in `server/routes/`
+2. Add the handler with `GatewayError`-based error handling
+3. Include request IDs in logs/responses
+4. Register the route in `server/server.ts`
+5. Cover behaviour with Vitest mocks
+
+### Adding a New Service/Feature
+1. Create typed helpers in `services/`
+2. Write colocated tests (`services/fooService.spec.ts`)
+3. Integrate via hooks or dedicated components
+4. Surface errors gracefully with fallbacks/logging
+5. Persist any user state with `services/persistence.ts`
+
+### Testing a Component Change
+1. Run `npm run test` (requires swisseph assets)
+2. Verify behaviour locally with `npm run dev`
+3. Reload to ensure persistence behaves correctly
+4. Inspect backend logs for request IDs and status codes
+
+## Production Build & Deployment
+
+- **TypeScript compilation**: Server builds via `tsconfig.server.json`
+- **Build output**: Frontend → `dist/`, server → `dist/server/`
+- **Docker multi-stage**: Builder compiles TS; runtime ships compiled JS only
+- **Redis**: Optional in dev, required for prod queue + worker flows
+- **Environment validation**: `server/lib/envCheck.ts` enforces mandatory vars
+- **Health checks**: `/health`, `/health/detailed`, and `/ready` support Railway probes
+- **Graceful shutdown**: SIGTERM/SIGINT handlers ease rolling deploys
+- **CORS**: Strict production whitelists; keep localhost/mobile hosts for dev
 
 ### Railway Deployment
 
-See `docs/RAILWAY_DEPLOYMENT.md` for complete guide. Quick start:
+See `docs/RAILWAY_DEPLOYMENT.md` for the full guide. Quick start:
 
-1. Add Redis service in Railway Dashboard
-2. Set environment variables (use `.env.production.template`)
+1. Add Redis via the Railway dashboard
+2. Configure env vars using `.env.production.template`
 3. Run `./scripts/railway-setup.sh` for interactive setup
 4. Deploy via GitHub integration or `railway up`
 
 **Pre-deployment validation:**
+
 ```bash
 ./scripts/railway-predeploy.sh
 ```
