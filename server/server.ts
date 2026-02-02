@@ -15,6 +15,7 @@ import analysisRouter from './routes/analysis';
 import agentSessionRouter from './routes/agentSession';
 import agentToolsRouter from './routes/agentTools';
 import elevenLabsWebhookRouter from './routes/elevenLabsWebhook';
+import chartWebhookRouter from './routes/chartWebhook';
 import transitsRouter from './routes/transits';
 import { validateEnv } from './lib/envCheck'; // S1-T05
 import { performHealthCheck, simpleHealthCheck } from './lib/healthCheck';
@@ -118,8 +119,9 @@ const elevenLabsRawParser = express.raw({
 });
 
 app.use('/api/webhooks/elevenlabs', elevenLabsRawParser);
+app.use('/api/webhooks/chart', elevenLabsRawParser); // Same raw parser for chart webhook
 app.use((req, res, next) => {
-  if (req.path.startsWith('/api/webhooks/elevenlabs')) {
+  if (req.path.startsWith('/api/webhooks/elevenlabs') || req.path.startsWith('/api/webhooks/chart')) {
     return next();
   }
   return jsonParser(req, res, next);
@@ -269,6 +271,7 @@ app.use('/api/analysis', analysisRouter);
 app.use('/api/agent/session', agentSessionRouter);
 app.use('/api/agent/tools', agentToolsRouter);
 app.use('/api/webhooks/elevenlabs', elevenLabsWebhookRouter);
+app.use('/api/webhooks/chart', chartWebhookRouter);
 app.use('/api/transits', transitsRouter);
 
 // --- STATIC FILE SERVING (Production) ---
